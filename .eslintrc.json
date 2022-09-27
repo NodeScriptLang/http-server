@@ -1,8 +1,5 @@
 {
     "extends": [
-        "@ubio/eslint-config"
-    ],
-    "rules": {
-        "unused-imports/no-unused-imports-ts": 0
-    }
+        "@flexent/eslint-config"
+    ]
 }
