@@ -28,6 +28,22 @@ export class AuthenticationRequiredError extends Exception {
     }
 }
 
+export class InvalidAuthenticationError extends Exception {
+    override status = 401;
+
+    constructor(message = 'Invalid authentication') {
+        super(message);
+    }
+}
+
+export class AccessDeniedError extends Exception {
+    override status = 403;
+
+    constructor(message = 'Access denied') {
+        super(message);
+    }
+}
+
 export class ServerError extends Exception {
     override status = 500;
 
