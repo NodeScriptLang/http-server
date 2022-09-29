@@ -44,7 +44,7 @@
         "@flexent/config": "^1.0.2",
         "@flexent/errors": "^1.0.0",
         "@flexent/exception": "^2.0.6",
-        "@flexent/logger": "^1.2.0",
+        "@flexent/logger": "^1.2.1",
         "@flexent/mesh": "^3.0.0",
         "@flexent/protocomm": "^0.3.0",
         "@koa/cors": "^3.4.1",
