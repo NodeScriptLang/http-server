@@ -1,4 +1,5 @@
 import { Config, config } from '@flexent/config';
+import { ServerError } from '@flexent/errors';
 import { Logger } from '@flexent/logger';
 import { dep, Mesh, ServiceConstructor } from '@flexent/mesh';
 import koaCors from '@koa/cors';
@@ -8,8 +9,6 @@ import koaBody from 'koa-body';
 import koaConditionalGet from 'koa-conditional-get';
 import koaEtag from 'koa-etag';
 import stoppable, { StoppableServer } from 'stoppable';
-
-import { ServerError } from './errors.js';
 
 export type CreateRequestScope = () => Mesh;
 

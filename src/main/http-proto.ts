@@ -1,9 +1,9 @@
+import { NotFoundError } from '@flexent/errors';
 import { Logger } from '@flexent/logger';
 import { dep } from '@flexent/mesh';
 import { DomainMethod, ProtocolIndex } from '@flexent/protocomm';
 import { Context, Next } from 'koa';
 
-import { NotFoundError } from './errors.js';
 import { RequestHandler } from './http-server.js';
 
 /**
