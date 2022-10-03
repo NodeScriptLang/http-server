@@ -19,7 +19,7 @@ export abstract class HttpProtocolHandler<P> implements RequestHandler {
     abstract protocol: ProtocolIndex<P>;
     abstract protocolImpl: P;
 
-    prefix = '/';
+    prefix = '';
 
     async handle(ctx: Context, next: Next) {
         const [domainName, methodName] = this.parsePath(ctx.path);
@@ -48,7 +48,7 @@ export abstract class HttpProtocolHandler<P> implements RequestHandler {
             throw new NotFoundError('Endpoint not found');
         }
         path = path.substring(this.prefix.length);
-        const m = /^([a-zA-Z0-9]+)\/([a-zA-Z0-9]+)$/.exec(path);
+        const m = /^\/([a-zA-Z0-9]+)\/([a-zA-Z0-9]+)$/.exec(path);
         if (!m) {
             throw new NotFoundError('Endpoint not found');
         }
