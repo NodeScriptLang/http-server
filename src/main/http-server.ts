@@ -6,8 +6,6 @@ import koaCors from '@koa/cors';
 import http from 'http';
 import Koa, { Context, Middleware, Next } from 'koa';
 import koaBody from 'koa-body';
-import koaConditionalGet from 'koa-conditional-get';
-import koaEtag from 'koa-etag';
 import stoppable, { StoppableServer } from 'stoppable';
 
 export type CreateRequestScope = () => Mesh;
@@ -76,7 +74,6 @@ export class BaseHttpServer {
     protected setupMiddleware() {
         this.koa.use(this.createErrorHandler());
         this.koa.use(koaCors({
-            // TODO SECURITY either add strict origin checks, or re-consider mode: cors on client
             exposeHeaders: ['Date', 'Content-Length'],
             maxAge: 3600,
             credentials: true,
@@ -92,8 +89,6 @@ export class BaseHttpServer {
                 maxFileSize: this.HTTP_MAX_FILE_SIZE_BYTES,
             },
         }));
-        this.koa.use(koaConditionalGet());
-        this.koa.use(koaEtag());
         this.koa.use(this.createRequestScopeMiddleware());
     }
 
