@@ -8,8 +8,6 @@ import Koa, { Context, Middleware, Next } from 'koa';
 import koaBody from 'koa-body';
 import stoppable, { StoppableServer } from 'stoppable';
 
-export type CreateRequestScope = () => Mesh;
-
 export interface RequestHandler {
     handle(ctx: Context, next: Next): Promise<any>;
 }
@@ -28,7 +26,7 @@ export class BaseHttpServer {
 
     @dep() config!: Config;
     @dep() logger!: Logger;
-    @dep({ key: 'requestScope' }) createRequestScope!: CreateRequestScope;
+    @dep({ key: 'httpRequestScope' }) createRequestScope!: () => Mesh;
 
     server: StoppableServer | null = null;
     koa = new Koa();
