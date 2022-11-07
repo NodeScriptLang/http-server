@@ -80,6 +80,7 @@ export class BaseHttpServer {
             json: true,
             urlencoded: true,
             multipart: true,
+            text: true,
             jsonLimit: this.HTTP_JSON_LIMIT,
             textLimit: this.HTTP_TEXT_LIMIT,
             formLimit: this.HTTP_FORM_LIMIT,
