@@ -70,8 +70,7 @@ export class BaseHttpServer {
     }
 
     protected setupMiddleware() {
-        this.koa.use(this.serverTimingMiddleware());
-        this.koa.use(this.errorHandlerMiddleware());
+        this.koa.use(this.standardMiddleware());
         this.koa.use(koaCors({
             exposeHeaders: ['Date', 'Content-Length'],
             maxAge: 3600,
@@ -89,22 +88,39 @@ export class BaseHttpServer {
                 maxFileSize: this.HTTP_MAX_FILE_SIZE_BYTES,
             },
         }));
-        this.koa.use(this.requestScopeMiddleware());
     }
 
-    protected errorHandlerMiddleware(): Middleware {
+    protected standardMiddleware(): Middleware {
         return async (ctx: Context, next: Next) => {
+            const startedAt = Date.now();
+            ctx.state.startedAt = startedAt;
+            const mesh = this.createRequestScope();
+            mesh.constant('ctx', ctx);
+            ctx.state.mesh = mesh;
+            const requestId = ctx.header['x-request-id'];
+            const agent = ctx.header['user-agent'];
             try {
                 await next();
+                this.logger.info(`HTTP request`, {
+                    method: ctx.method,
+                    url: ctx.url,
+                    status: ctx.status,
+                    took: Date.now() - startedAt,
+                    agent,
+                    requestId,
+                });
             } catch (error: any) {
                 const status = Number(error.status) || 500;
                 const isClientError = status >= 400 && status < 500;
-                const logLevel = isClientError ? 'debug' : 'error';
+                const logLevel = isClientError ? 'info' : 'error';
                 ctx.status = isClientError ? error.status : 500;
-                this.logger[logLevel](`HTTP ${status}`.trim(), {
+                this.logger[logLevel](`HTTP error`.trim(), {
                     method: ctx.method,
                     url: ctx.url,
-                    requestId: ctx.header['x-request-id'],
+                    status: ctx.status,
+                    took: Date.now() - startedAt,
+                    agent,
+                    requestId,
                     error,
                 });
                 const presentedErr = isClientError ? error : new ServerError();
@@ -112,25 +128,9 @@ export class BaseHttpServer {
                     name: presentedErr.name,
                     message: presentedErr.message,
                 };
+            } finally {
+                ctx.header['server-timing'] = `total;dur=${Date.now() - startedAt}`;
             }
-        };
-    }
-
-    protected requestScopeMiddleware() {
-        return (ctx: Context, next: Next) => {
-            const mesh = this.createRequestScope();
-            mesh.constant('ctx', ctx);
-            ctx.state.mesh = mesh;
-            return next();
-        };
-    }
-
-    protected serverTimingMiddleware() {
-        return async (ctx: Context, next: Next) => {
-            const startedAt = Date.now();
-            ctx.state.startedAt = startedAt;
-            await next();
-            ctx.header['server-timing'] = `total;dur=${Date.now() - startedAt}`;
         };
     }
 
