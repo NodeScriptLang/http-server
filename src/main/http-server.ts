@@ -70,7 +70,8 @@ export class BaseHttpServer {
     }
 
     protected setupMiddleware() {
-        this.koa.use(this.createErrorHandler());
+        this.koa.use(this.serverTimingMiddleware());
+        this.koa.use(this.errorHandlerMiddleware());
         this.koa.use(koaCors({
             exposeHeaders: ['Date', 'Content-Length'],
             maxAge: 3600,
@@ -88,10 +89,10 @@ export class BaseHttpServer {
                 maxFileSize: this.HTTP_MAX_FILE_SIZE_BYTES,
             },
         }));
-        this.koa.use(this.createRequestScopeMiddleware());
+        this.koa.use(this.requestScopeMiddleware());
     }
 
-    protected createErrorHandler(): Middleware {
+    protected errorHandlerMiddleware(): Middleware {
         return async (ctx: Context, next: Next) => {
             try {
                 await next();
@@ -100,11 +101,11 @@ export class BaseHttpServer {
                 const isClientError = status >= 400 && status < 500;
                 const logLevel = isClientError ? 'debug' : 'error';
                 ctx.status = isClientError ? error.status : 500;
-                this.logger[logLevel](`HTTP ${status} ${error.stack}`.trim(), {
+                this.logger[logLevel](`HTTP ${status}`.trim(), {
                     method: ctx.method,
                     url: ctx.url,
                     requestId: ctx.header['x-request-id'],
-                    details: error.details ?? {},
+                    error,
                 });
                 const presentedErr = isClientError ? error : new ServerError();
                 ctx.body = {
@@ -115,12 +116,21 @@ export class BaseHttpServer {
         };
     }
 
-    protected createRequestScopeMiddleware() {
+    protected requestScopeMiddleware() {
         return (ctx: Context, next: Next) => {
             const mesh = this.createRequestScope();
             mesh.constant('ctx', ctx);
             ctx.state.mesh = mesh;
             return next();
+        };
+    }
+
+    protected serverTimingMiddleware() {
+        return async (ctx: Context, next: Next) => {
+            const startedAt = Date.now();
+            ctx.state.startedAt = startedAt;
+            await next();
+            ctx.header['server-timing'] = `total;dur=${Date.now() - startedAt}`;
         };
     }
 
