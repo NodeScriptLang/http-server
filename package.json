@@ -1,6 +1,6 @@
 {
     "name": "@flexent/http-server",
-    "version": "0.3.4",
+    "version": "0.3.5",
     "description": "Standard HTTP Server",
     "type": "module",
     "sideEffects": false,
