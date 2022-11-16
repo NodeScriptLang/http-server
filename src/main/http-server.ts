@@ -114,7 +114,7 @@ export class BaseHttpServer {
                 const isClientError = status >= 400 && status < 500;
                 const logLevel = isClientError ? 'info' : 'error';
                 ctx.status = isClientError ? error.status : 500;
-                this.logger[logLevel](`HTTP error`.trim(), {
+                this.logger[logLevel](`HTTP error`, {
                     method: ctx.method,
                     url: ctx.url,
                     status: ctx.status,
