@@ -99,14 +99,13 @@ export class BaseHttpServer {
             ctx.state.mesh = mesh;
             const requestId = ctx.header['x-request-id'];
             const agent = ctx.header['user-agent'];
-            const actor = ctx.state.actor || undefined;
             try {
                 await next();
                 this.logger.info(`HTTP request`, {
                     method: ctx.method,
                     url: ctx.url,
                     status: ctx.status,
-                    actor,
+                    actor: ctx.state.actor,
                     took: Date.now() - startedAt,
                     agent,
                     requestId,
@@ -120,7 +119,7 @@ export class BaseHttpServer {
                     method: ctx.method,
                     url: ctx.url,
                     status: ctx.status,
-                    actor,
+                    actor: ctx.state.actor,
                     took: Date.now() - startedAt,
                     agent,
                     requestId,
