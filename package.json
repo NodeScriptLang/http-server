@@ -42,7 +42,7 @@
     },
     "dependencies": {
         "@flexent/config": "^1.0.6",
-        "@flexent/errors": "^1.0.0",
+        "@flexent/errors": "^1.0.1",
         "@flexent/exception": "^2.0.6",
         "@flexent/logger": "^1.4.0",
         "@flexent/mesh": "^3.1.2",
