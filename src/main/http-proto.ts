@@ -1,7 +1,7 @@
-import { NotFoundError } from '@flexent/errors';
-import { Logger } from '@flexent/logger';
-import { dep } from '@flexent/mesh';
-import { DomainMethod, ProtocolIndex } from '@flexent/protocomm';
+import { NotFoundError } from '@nodescript/errors';
+import { Logger } from '@nodescript/logger';
+import { dep } from '@nodescript/mesh';
+import { DomainMethod, ProtocolIndex } from '@nodescript/protocomm';
 import { Context, Next } from 'koa';
 
 import { RequestHandler } from './http-server.js';

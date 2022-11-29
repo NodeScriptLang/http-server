@@ -1,7 +1,7 @@
-import { Config, config } from '@flexent/config';
-import { ServerError } from '@flexent/errors';
-import { Logger } from '@flexent/logger';
-import { dep, Mesh, ServiceConstructor } from '@flexent/mesh';
+import { Config, config } from '@nodescript/config';
+import { ServerError } from '@nodescript/errors';
+import { Logger } from '@nodescript/logger';
+import { dep, Mesh, ServiceConstructor } from '@nodescript/mesh';
 import koaCors from '@koa/cors';
 import http from 'http';
 import Koa, { Context, Middleware, Next } from 'koa';
