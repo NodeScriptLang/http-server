@@ -3,6 +3,7 @@ import { Config, config } from '@nodescript/config';
 import { ServerError } from '@nodescript/errors';
 import { Logger } from '@nodescript/logger';
 import { dep, Mesh, ServiceConstructor } from '@nodescript/mesh';
+import { HistogramMetric, metric } from '@nodescript/metrics';
 import http from 'http';
 import Koa, { Context, Middleware, Next } from 'koa';
 import koaBody from 'koa-body';
@@ -27,6 +28,9 @@ export class BaseHttpServer {
     @dep() config!: Config;
     @dep() logger!: Logger;
     @dep({ key: 'httpRequestScope' }) createRequestScope!: () => Mesh;
+
+    @metric()
+    latency = new HistogramMetric('app_http_latency', 'HTTP request/response latency');
 
     server: StoppableServer | null = null;
     koa = new Koa();
@@ -101,29 +105,41 @@ export class BaseHttpServer {
             const agent = ctx.header['user-agent'];
             try {
                 await next();
+                const latency = Date.now() - startedAt;
                 this.logger.info(`HTTP request`, {
                     method: ctx.method,
                     url: ctx.url,
                     status: ctx.status,
                     actor: ctx.state.actor,
-                    took: Date.now() - startedAt,
+                    latency,
                     agent,
                     requestId,
+                });
+                this.latency.add(latency, {
+                    method: ctx.method,
+                    url: ctx.path,
+                    status: ctx.staus,
                 });
             } catch (error: any) {
                 const status = Number(error.status) || 500;
                 const isClientError = status >= 400 && status < 500;
                 const logLevel = isClientError ? 'info' : 'error';
                 ctx.status = isClientError ? error.status : 500;
+                const latency = Date.now() - startedAt;
                 this.logger[logLevel](`HTTP error`, {
                     method: ctx.method,
                     url: ctx.url,
                     status: ctx.status,
                     actor: ctx.state.actor,
-                    took: Date.now() - startedAt,
+                    latency,
                     agent,
                     requestId,
                     error,
+                });
+                this.latency.add(latency, {
+                    method: ctx.method,
+                    url: ctx.path,
+                    status: ctx.staus,
                 });
                 const presentedErr = isClientError ? error : new ServerError();
                 ctx.body = {
