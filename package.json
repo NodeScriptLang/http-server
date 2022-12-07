@@ -1,6 +1,6 @@
 {
     "name": "@nodescript/http-server",
-    "version": "0.6.0",
+    "version": "0.6.1",
     "description": "Standard HTTP Server",
     "type": "module",
     "sideEffects": false,
@@ -47,7 +47,7 @@
         "@nodescript/exception": "^2.0.8",
         "@nodescript/logger": "^1.4.1",
         "@nodescript/mesh": "^3.1.3",
-        "@nodescript/metrics": "^1.0.1",
+        "@nodescript/metrics": "^1.0.2",
         "@nodescript/protocomm": "^0.5.2",
         "@types/koa": "^2.13.5",
         "@types/koa__cors": "^3.3.0",

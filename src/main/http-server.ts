@@ -115,7 +115,7 @@ export class HttpServer {
                     agent,
                     requestId,
                 });
-                this.latency.add(latency, {
+                this.latency.addMillis(latency, {
                     method: ctx.method,
                     url: ctx.path,
                     status: ctx.staus,
@@ -136,7 +136,7 @@ export class HttpServer {
                     requestId,
                     error,
                 });
-                this.latency.add(latency, {
+                this.latency.addMillis(latency, {
                     method: ctx.method,
                     url: ctx.path,
                     status: ctx.staus,
