@@ -15,7 +15,7 @@ export interface RequestHandler {
 
 export type RequestHandlerClass = ServiceConstructor<RequestHandler>;
 
-export class BaseHttpServer {
+export class HttpServer {
 
     @config({ default: 8080 }) PORT!: number;
     @config({ default: '5mb' }) HTTP_JSON_LIMIT!: string;
