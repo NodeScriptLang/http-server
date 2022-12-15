@@ -1,9 +1,9 @@
 import { NotFoundError } from '@nodescript/errors';
-import { Event } from '@nodescript/event';
 import { Logger } from '@nodescript/logger';
-import { dep } from '@nodescript/mesh';
 import { DomainMethod, DomainMethodStat, ProtocolIndex } from '@nodescript/protocomm';
 import { Context, Next } from 'koa';
+import { dep } from 'mesh-ioc';
+import { Event } from 'nanoevent';
 
 import { RequestHandler } from './http-server.js';
 
