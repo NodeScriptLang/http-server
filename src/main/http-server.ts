@@ -1,11 +1,11 @@
 import koaCors from '@koa/cors';
-import { Config, config } from '@nodescript/config';
 import { ServerError } from '@nodescript/errors';
 import { Logger } from '@nodescript/logger';
 import { HistogramMetric, metric } from '@nodescript/metrics';
 import http from 'http';
 import Koa, { Context, Middleware, Next } from 'koa';
 import koaBody from 'koa-body';
+import { Config, config } from 'mesh-config';
 import { dep, Mesh, ServiceConstructor } from 'mesh-ioc';
 import stoppable, { StoppableServer } from 'stoppable';
 
