@@ -4,14 +4,16 @@ import { config } from 'mesh-config';
 import { dep, Mesh } from 'mesh-ioc';
 import { Socket } from 'net';
 
-import { RequestHandlerClass } from '../http-server.js';
 import { HttpContext } from './HttpContext.js';
+import { HttpHandlerClass } from './HttpHandler.js';
 
 export class HttpServer {
 
     @dep() logger!: Logger;
     @dep({ key: 'httpRequestScope' }) createRequestScope!: () => Mesh;
 
+    @config({ default: 8080 }) HTTP_PORT!: number;
+    @config({ default: '127.0.0.1' }) HTTP_ADDRESS!: string;
     @config({ default: 300000 }) HTTP_TIMEOUT!: number;
     @config({ default: 5000 }) HTTP_SHUTDOWN_DELAY!: number;
 
@@ -19,7 +21,7 @@ export class HttpServer {
     protected requestsPerSocket = new Map<Socket, number>();
     protected stopping = false;
 
-    handlers: RequestHandlerClass[] = [];
+    handlers: HttpHandlerClass[] = [];
 
     async start() {
         if (this.server) {
@@ -27,9 +29,18 @@ export class HttpServer {
         }
         this.stopping = false;
         this.requestsPerSocket.clear();
-        this.server = createServer((req, res) => this.handleRequest(req, res));
-        this.server.on('connection', sock => this.onConnection(sock));
-        this.server.on('request', (req, res) => this.onRequest(req, res));
+        const server = createServer((req, res) => this.handleRequest(req, res));
+        this.server = server;
+        server.on('connection', sock => this.onConnection(sock));
+        server.on('request', (req, res) => this.onRequest(req, res));
+        server.setTimeout(this.HTTP_TIMEOUT);
+        await new Promise<void>((resolve, reject) => {
+            server.on('error', err => reject(err));
+            server.listen(this.HTTP_PORT, this.HTTP_ADDRESS, () => {
+                this.logger.info(`Listening on ${this.HTTP_PORT}`);
+                resolve();
+            });
+        });
     }
 
     async stop() {
@@ -49,7 +60,11 @@ export class HttpServer {
         this.server = null;
     }
 
-    async addRequestHandler(handlerClass: RequestHandlerClass) {
+    getServer() {
+        return this.server;
+    }
+
+    async addHandler(handlerClass: HttpHandlerClass) {
         this.handlers.push(handlerClass);
     }
 
@@ -59,9 +74,9 @@ export class HttpServer {
             const context = new HttpContext(this, mesh, req, res);
             mesh.connect(context);
             await context.next();
-            // TODO send response
-            // TODO add middleware
+            await this.sendResponse(context);
         } catch (error) {
+            console.error('error', error);
             // TODO handle standard errors
         }
     }
@@ -108,6 +123,15 @@ export class HttpServer {
             sock.destroy();
         }
         this.requestsPerSocket.clear();
+    }
+
+    protected sendResponse(ctx: HttpContext) {
+        const { res } = ctx;
+        // TODO infer body content type
+        // TODO apply headers
+        // TODO stream body
+        res.writeHead(ctx.status, ctx.responseHeaders);
+        res.end(ctx.responseBody);
     }
 
 }

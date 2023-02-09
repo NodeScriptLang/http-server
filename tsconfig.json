@@ -12,7 +12,7 @@
         "composite": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "lib": ["ES2015"],
+        "lib": ["ES2015", "DOM"],
         "rootDir": "src",
         "outDir": "out",
     },

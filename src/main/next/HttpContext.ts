@@ -1,4 +1,4 @@
-import { IncomingMessage, ServerResponse } from 'http';
+import { IncomingMessage, OutgoingHttpHeaders, ServerResponse } from 'http';
 import { Mesh } from 'mesh-ioc';
 
 import { HttpHandler } from './HttpHandler.js';
@@ -6,8 +6,14 @@ import { HttpServer } from './HttpServer.js';
 
 export class HttpContext {
 
-    startedAt = Date.now();
-    index = 0;
+    protected startedAt = Date.now();
+    protected index = -1;
+
+    requestBody: any = undefined;
+
+    status = 404;
+    responseHeaders: OutgoingHttpHeaders = {};
+    responseBody = '';
 
     constructor(
         readonly server: HttpServer,
@@ -25,8 +31,19 @@ export class HttpContext {
     async next() {
         this.index += 1;
         const handlerClass = this.server.handlers[this.index];
+        if (!handlerClass) {
+            return;
+        }
         const handler = this.mesh.resolve<HttpHandler>(handlerClass);
         await handler.handle(this);
+    }
+
+    get body() {
+        return this.requestBody;
+    }
+
+    set body(body) {
+        this.responseBody = body;
     }
 
 }
