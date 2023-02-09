@@ -15,12 +15,12 @@ export class TestRuntime {
 
     async beforeEach() {
         this.mesh = new Mesh('App');
-        this.requestScope = new Mesh('Request');
+        this.requestScope = new Mesh('Request', this.mesh);
         this.mesh.connect(this);
         this.mesh.service(Logger, ConsoleLogger);
         this.mesh.service(Config, ProcessEnvConfig);
         this.mesh.service(HttpServer);
-        this.mesh.constant('httpRequestScope', () => this.requestScope);
+        this.mesh.constant(HttpServer.SCOPE, () => this.requestScope);
         this.logger.level = this.config.getString('LOG_LEVEL', 'mute') as LogLevel;
     }
 

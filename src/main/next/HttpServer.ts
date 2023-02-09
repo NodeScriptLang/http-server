@@ -1,27 +1,33 @@
 import { Logger } from '@nodescript/logger';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
 import { config } from 'mesh-config';
-import { dep, Mesh } from 'mesh-ioc';
+import { dep, Mesh, ServiceKey } from 'mesh-ioc';
 import { Socket } from 'net';
 
 import { HttpContext } from './HttpContext.js';
-import { HttpHandlerClass } from './HttpHandler.js';
+import { HttpHandler } from './HttpHandler.js';
+
+const HTTP_HANDLERS_KEY = 'httpHandlers';
+const HTTP_SCOPE_KEY = 'httpRequestScope';
 
 export class HttpServer {
 
+    static SCOPE = HTTP_SCOPE_KEY;
+    static HANDLERS = HTTP_HANDLERS_KEY;
+
     @dep() logger!: Logger;
-    @dep({ key: 'httpRequestScope' }) createRequestScope!: () => Mesh;
+    @dep({ key: HTTP_SCOPE_KEY }) createRequestScope!: () => Mesh;
+    @dep({ key: HTTP_HANDLERS_KEY }) handlerKeys!: ServiceKey<HttpHandler>[];
 
     @config({ default: 8080 }) HTTP_PORT!: number;
     @config({ default: '127.0.0.1' }) HTTP_ADDRESS!: string;
     @config({ default: 300000 }) HTTP_TIMEOUT!: number;
     @config({ default: 5000 }) HTTP_SHUTDOWN_DELAY!: number;
+    @config({ default: 5 * 1024 * 1024 }) HTTP_BODY_LIMIT!: number;
 
     protected server: Server | null = null;
     protected requestsPerSocket = new Map<Socket, number>();
     protected stopping = false;
-
-    handlers: HttpHandlerClass[] = [];
 
     async start() {
         if (this.server) {
@@ -64,31 +70,42 @@ export class HttpServer {
         return this.server;
     }
 
-    async addHandler(handlerClass: HttpHandlerClass) {
-        this.handlers.push(handlerClass);
-    }
-
     protected async handleRequest(req: IncomingMessage, res: ServerResponse) {
         try {
             const mesh = this.createRequestScope();
             const context = new HttpContext(this, mesh, req, res);
             mesh.connect(context);
-            await context.next();
-            await this.sendResponse(context);
+            await context.next()
+                .catch(error => {
+                    context.status = 500;
+                    context.body = {
+                        name: 'InternalServerError',
+                        message: error.message,
+                    };
+                });
+            context.sendResponse();
         } catch (error) {
-            console.error('error', error);
-            // TODO handle standard errors
+            this.logger.error('HttpServer misconfigured', { error });
+            res.writeHead(500, { 'content-type': 'application/json' });
+            res.end(JSON.stringify({
+                name: 'InternalServerError',
+                message: 'The request cannot be processed'
+            }));
         }
     }
 
+    /**
+     * Tracks the number of pending requests per socket, so that the server could close gracefully
+     */
     protected onConnection(sock: Socket) {
-        // Track the number of pending requests per socket, so that we could close gracefully
         this.requestsPerSocket.set(sock, 0);
         sock.once('close', () => this.requestsPerSocket.delete(sock));
     }
 
+    /**
+     * Tracks requests per connection, close connection during shutdown, when requests are served.
+     */
     protected onRequest(req: IncomingMessage, res: ServerResponse) {
-        // Track requests per connection, close connection during shutdown, when requests are served
         const { socket } = req;
         this.requestsPerSocket.set(socket, this.getSocketRequests(socket) + 1);
         res.once('finish', () => {
@@ -123,15 +140,6 @@ export class HttpServer {
             sock.destroy();
         }
         this.requestsPerSocket.clear();
-    }
-
-    protected sendResponse(ctx: HttpContext) {
-        const { res } = ctx;
-        // TODO infer body content type
-        // TODO apply headers
-        // TODO stream body
-        res.writeHead(ctx.status, ctx.responseHeaders);
-        res.end(ctx.responseBody);
     }
 
 }

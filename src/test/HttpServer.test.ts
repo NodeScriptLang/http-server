@@ -2,6 +2,7 @@ import assert from 'assert';
 
 import { HttpContext } from '../main/next/HttpContext.js';
 import { HttpHandler } from '../main/next/HttpHandler.js';
+import { HttpServer } from '../main/next/HttpServer.js';
 import { runtime } from './runtime.js';
 
 describe('HttpServer', () => {
@@ -31,8 +32,9 @@ describe('HttpServer', () => {
         }
 
         class Baz implements HttpHandler {
-            async handle(ctx: HttpContext): Promise<any> {
+            async handle(ctx: HttpContext) {
                 events.push('baz starts');
+                await ctx.readRequestBody();
                 ctx.status = 200;
                 ctx.body = 'OK';
                 events.push('baz ends');
@@ -42,11 +44,8 @@ describe('HttpServer', () => {
         runtime.requestScope.service(Foo);
         runtime.requestScope.service(Bar);
         runtime.requestScope.service(Baz);
-
+        runtime.mesh.constant(HttpServer.HANDLERS, [Foo, Bar, Baz]);
         await runtime.server.start();
-        runtime.server.addHandler(Foo);
-        runtime.server.addHandler(Bar);
-        runtime.server.addHandler(Baz);
         const res = await fetch(runtime.getUrl());
         assert.strictEqual(res.status, 200);
         assert.strictEqual(await res.text(), 'OK');
