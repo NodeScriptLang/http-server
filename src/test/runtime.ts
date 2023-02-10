@@ -2,7 +2,8 @@ import { ConsoleLogger, Logger, LogLevel } from '@nodescript/logger';
 import { Config, ProcessEnvConfig } from 'mesh-config';
 import { dep, Mesh } from 'mesh-ioc';
 
-import { HttpServer } from '../main/next/HttpServer.js';
+import { HttpServer } from '../main/index.js';
+import { BarMiddleware, CatchMiddleware, EndpointHandler, FooMiddleware, ThrowMiddleware } from './handlers.js';
 
 export class TestRuntime {
 
@@ -12,6 +13,7 @@ export class TestRuntime {
 
     mesh = new Mesh();
     requestScope = new Mesh();
+    events: string[] = [];
 
     async beforeEach() {
         this.mesh = new Mesh('App');
@@ -21,7 +23,13 @@ export class TestRuntime {
         this.mesh.service(Config, ProcessEnvConfig);
         this.mesh.service(HttpServer);
         this.mesh.constant(HttpServer.SCOPE, () => this.requestScope);
+        this.requestScope.service(FooMiddleware);
+        this.requestScope.service(BarMiddleware);
+        this.requestScope.service(CatchMiddleware);
+        this.requestScope.service(ThrowMiddleware);
+        this.requestScope.service(EndpointHandler);
         this.logger.level = this.config.getString('LOG_LEVEL', 'mute') as LogLevel;
+        this.events = [];
     }
 
     async afterEach() {

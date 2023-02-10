@@ -1,23 +1,22 @@
 import { Logger } from '@nodescript/logger';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
 import { config } from 'mesh-config';
-import { dep, Mesh, ServiceKey } from 'mesh-ioc';
+import { dep, Mesh } from 'mesh-ioc';
 import { Socket } from 'net';
 
 import { HttpContext } from './HttpContext.js';
 import { HttpHandler } from './HttpHandler.js';
 
-const HTTP_HANDLERS_KEY = 'httpHandlers';
-const HTTP_SCOPE_KEY = 'httpRequestScope';
+const HTTP_HANDLER_KEY = 'HttpServer:handler';
+const HTTP_SCOPE_KEY = 'HttpServer:requestScope';
 
 export class HttpServer {
 
     static SCOPE = HTTP_SCOPE_KEY;
-    static HANDLERS = HTTP_HANDLERS_KEY;
+    static HANDLER = HTTP_HANDLER_KEY;
 
     @dep() logger!: Logger;
     @dep({ key: HTTP_SCOPE_KEY }) createRequestScope!: () => Mesh;
-    @dep({ key: HTTP_HANDLERS_KEY }) handlerKeys!: ServiceKey<HttpHandler>[];
 
     @config({ default: 8080 }) HTTP_PORT!: number;
     @config({ default: '127.0.0.1' }) HTTP_ADDRESS!: string;
@@ -73,19 +72,13 @@ export class HttpServer {
     protected async handleRequest(req: IncomingMessage, res: ServerResponse) {
         try {
             const mesh = this.createRequestScope();
-            const context = new HttpContext(this, mesh, req, res);
-            mesh.connect(context);
-            await context.next()
-                .catch(error => {
-                    context.status = 500;
-                    context.body = {
-                        name: 'InternalServerError',
-                        message: error.message,
-                    };
-                });
-            context.sendResponse();
+            const handler = mesh.resolve<HttpHandler>(HTTP_HANDLER_KEY);
+            const ctx = new HttpContext(this, req, res);
+            await handler.handle(ctx, () => Promise.resolve());
+            ctx.sendResponse();
         } catch (error) {
-            this.logger.error('HttpServer misconfigured', { error });
+            // Minimal error handling here, should be implemented by error handler
+            this.logger.error('HttpServer: request failed', { error });
             res.writeHead(500, { 'content-type': 'application/json' });
             res.end(JSON.stringify({
                 name: 'InternalServerError',

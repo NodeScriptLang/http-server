@@ -1,8 +1,7 @@
 import assert from 'assert';
 
-import { HttpContext } from '../main/next/HttpContext.js';
-import { HttpHandler } from '../main/next/HttpHandler.js';
-import { HttpServer } from '../main/next/HttpServer.js';
+import { HttpServer } from '../main/index.js';
+import { EchoHandler } from './handlers.js';
 import { runtime } from './runtime.js';
 
 describe('HttpServer', () => {
@@ -13,50 +12,32 @@ describe('HttpServer', () => {
         assert.strictEqual(addr.port, runtime.port);
     });
 
-    it('calls middleware', async () => {
-        const events: string[] = [];
-        class Foo implements HttpHandler {
-            async handle(ctx: HttpContext) {
-                events.push('foo starts');
-                await ctx.next();
-                events.push('foo ends');
-            }
-        }
-
-        class Bar implements HttpHandler {
-            async handle(ctx: HttpContext) {
-                events.push('bar starts');
-                await ctx.next();
-                events.push('bar ends');
-            }
-        }
-
-        class Baz implements HttpHandler {
-            async handle(ctx: HttpContext) {
-                events.push('baz starts');
-                await ctx.readRequestBody();
-                ctx.status = 200;
-                ctx.body = 'OK';
-                events.push('baz ends');
-            }
-        }
-
-        runtime.requestScope.service(Foo);
-        runtime.requestScope.service(Bar);
-        runtime.requestScope.service(Baz);
-        runtime.mesh.constant(HttpServer.HANDLERS, [Foo, Bar, Baz]);
+    it('echoes request details', async () => {
         await runtime.server.start();
-        const res = await fetch(runtime.getUrl());
+        runtime.requestScope.service(HttpServer.HANDLER, EchoHandler);
+        const res = await fetch(runtime.getUrl('/hello?foo=one&bar=two&foo=three'), {
+            method: 'post',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Custom-Header': 'hello',
+            },
+            body: JSON.stringify({
+                hello: 'world',
+            })
+        });
         assert.strictEqual(res.status, 200);
-        assert.strictEqual(await res.text(), 'OK');
-        assert.deepStrictEqual(events, [
-            'foo starts',
-            'bar starts',
-            'baz starts',
-            'baz ends',
-            'bar ends',
-            'foo ends',
-        ]);
+        const json = await res.json();
+        assert.strictEqual(json.method, 'POST');
+        assert.strictEqual(json.path, '/hello');
+        assert.deepStrictEqual(json.query, {
+            foo: ['one', 'three'],
+            bar: ['two'],
+        });
+        assert.deepStrictEqual(json.headers['content-type'], ['application/json']);
+        assert.deepStrictEqual(json.headers['x-custom-header'], ['hello']);
+        assert.deepStrictEqual(json.body, {
+            hello: 'world',
+        });
     });
 
 });

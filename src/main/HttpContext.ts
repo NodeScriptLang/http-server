@@ -1,10 +1,8 @@
 import { InvalidStateError, RequestSizeExceededError } from '@nodescript/errors';
 import { IncomingMessage, ServerResponse } from 'http';
-import { Mesh, ServiceKey } from 'mesh-ioc';
 import { Stream } from 'stream';
 
 import { HttpDict } from './HttpDict.js';
-import { HttpHandler } from './HttpHandler.js';
 import { HttpServer } from './HttpServer.js';
 import { searchParamsToDict } from './util.js';
 
@@ -18,7 +16,6 @@ export class HttpContext {
 
     protected startedAt = Date.now();
     protected index = -1;
-    protected handlers: HttpHandler[];
 
     host: string;
     url: URL;
@@ -30,28 +27,19 @@ export class HttpContext {
     responseHeaders: HttpDict = {};
     responseBody: HttpResponseBody = undefined;
 
-
     constructor(
         readonly server: HttpServer,
-        readonly mesh: Mesh,
         readonly request: IncomingMessage,
         readonly response: ServerResponse,
     ) {
-        const handlerKeys = this.mesh.resolve(HttpServer.HANDLERS) as ServiceKey<HttpHandler>[];
-        this.handlers = handlerKeys.map(key => this.mesh.resolve(key));
         this.requestHeaders = (this.request as any).headersDistinct; // Added in 18.3.0, TS doesn't know yet
         this.host = this.requestHeaders['host'][0];
         this.url = new URL(this.request.url ?? '', `http://${this.host}`);
         this.query = searchParamsToDict(this.url.searchParams);
     }
 
-    async next() {
-        this.index += 1;
-        const handler = this.handlers[this.index];
-        if (!handler) {
-            return;
-        }
-        await handler.handle(this);
+    get method() {
+        return (this.request.method ?? '').toUpperCase();
     }
 
     get body() {
@@ -64,7 +52,7 @@ export class HttpContext {
 
     async readRequestBody(type: RequestBodyType = 'auto') {
         if (this.request.complete) {
-            return;
+            return this.requestBody;
         }
         const raw = await this.readRequestBodyRaw();
         const actualType = type === 'auto' ? this.inferRequestBodyType() : type;
@@ -87,6 +75,7 @@ export class HttpContext {
             default:
                 this.requestBody = raw;
         }
+        return this.requestBody;
     }
 
     protected async readRequestBodyRaw(): Promise<Buffer> {
