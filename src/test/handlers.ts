@@ -26,7 +26,7 @@ export class CatchMiddleware implements HttpHandler {
         } catch (error: any) {
             runtime.events.push('caught');
             ctx.status = 500;
-            ctx.body = error.message;
+            ctx.responseBody = error.message;
         }
     }
 }
@@ -42,7 +42,7 @@ export class EndpointHandler implements HttpHandler {
     async handle(ctx: HttpContext) {
         runtime.events.push('endpoint start');
         ctx.status = 200;
-        ctx.body = 'OK';
+        ctx.responseBody = 'OK';
         runtime.events.push('endpoint end');
     }
 }
@@ -51,7 +51,7 @@ export class EchoHandler implements HttpHandler {
     async handle(ctx: HttpContext) {
         const body = await ctx.readRequestBody();
         ctx.status = 200;
-        ctx.body = {
+        ctx.responseBody = {
             method: ctx.method,
             path: ctx.url.pathname,
             query: ctx.query,

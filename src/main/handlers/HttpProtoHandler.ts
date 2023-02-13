@@ -1,11 +1,11 @@
 import { NotFoundError } from '@nodescript/errors';
 import { Logger } from '@nodescript/logger';
 import { DomainMethod, DomainMethodStat, ProtocolIndex } from '@nodescript/protocomm';
-import { Context, Next } from 'koa';
 import { dep } from 'mesh-ioc';
 import { Event } from 'nanoevent';
 
-import { RequestHandler } from './http-server.js';
+import { HttpContext } from '../HttpContext.js';
+import { HttpHandler, HttpNext } from '../HttpHandler.js';
 
 /**
  * Routes HTTP requests according to specified protocol.
@@ -13,7 +13,7 @@ import { RequestHandler } from './http-server.js';
  * Handler must be created in request scope by passing protocol implementation
  * (which can also request-scoped).
  */
-export abstract class HttpProtocolHandler<P> implements RequestHandler {
+export abstract class HttpProtocolHandler<P> implements HttpHandler {
 
     @dep() logger!: Logger;
 
@@ -23,8 +23,8 @@ export abstract class HttpProtocolHandler<P> implements RequestHandler {
     prefix = '';
     methodStats = new Event<DomainMethodStat>();
 
-    async handle(ctx: Context, next: Next) {
-        const [domainName, methodName] = this.parsePath(ctx.path);
+    async handle(ctx: HttpContext, next: HttpNext) {
+        const [domainName, methodName] = this.parsePath(ctx.url.pathname);
         const {
             methodDef,
             reqSchema,
@@ -44,7 +44,7 @@ export abstract class HttpProtocolHandler<P> implements RequestHandler {
             const res = await methodImpl.call(domainImpl, decodedParams);
             const decoded = resSchema.decode(res);
             this.logger.debug(`<<< ${domainName}.${methodName}`, decoded);
-            ctx.body = decoded;
+            ctx.responseBody = decoded;
         } finally {
             this.methodStats.emit({
                 domain: domainName,
@@ -66,11 +66,12 @@ export abstract class HttpProtocolHandler<P> implements RequestHandler {
         return [m[1], m[2]];
     }
 
-    protected parseParams(ctx: Context) {
+    protected async parseParams(ctx: HttpContext) {
         if (ctx.method === 'GET') {
             return ctx.query;
         }
-        return (ctx.request as any).body || {};
+        const body = await ctx.readRequestBody('json');
+        return body ?? {};
     }
 
 }

@@ -1,4 +1,9 @@
+import { matchPath } from '@nodescript/pathmatcher';
+
+import { HttpContext } from './HttpContext.js';
 import { HttpDict } from './HttpDict.js';
+import { HttpHandlerFn, HttpNext } from './HttpHandler.js';
+import { HttpRoute } from './HttpRoute.js';
 
 export function headersToDict(headers: Record<string, string | string[] | undefined>): HttpDict {
     const dict: HttpDict = {};
@@ -17,4 +22,33 @@ export function searchParamsToDict(search: URLSearchParams): HttpDict {
         dict[key] = values;
     }
     return dict;
+}
+
+export function compose(fns: HttpHandlerFn[]): HttpHandlerFn {
+    return async (ctx: HttpContext, next: HttpNext) => {
+        const dispatch = async (index: number) => {
+            if (index >= fns.length) {
+                return await next();
+            }
+            const fn = fns[index];
+            await fn(ctx, () => dispatch(index + 1));
+        };
+        return await dispatch(0);
+    };
+}
+
+export function createRouteHandler(route: HttpRoute): HttpHandlerFn {
+    return async (ctx, next) => {
+        const [routeMethod, routePath, routeHandler] = route;
+        const methodMatch = routeMethod === '*' || routeMethod === ctx.method;
+        if (!methodMatch) {
+            return next();
+        }
+        const pathParams = matchPath(routePath, ctx.url.pathname);
+        if (!pathParams) {
+            return next();
+        }
+        Object.assign(ctx.params, pathParams);
+        await routeHandler(ctx, next);
+    };
 }

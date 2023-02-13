@@ -1,5 +1,7 @@
 import { InvalidStateError, RequestSizeExceededError } from '@nodescript/errors';
+import { Logger } from '@nodescript/logger';
 import { IncomingMessage, ServerResponse } from 'http';
+import { dep } from 'mesh-ioc';
 import { Stream } from 'stream';
 
 import { HttpDict } from './HttpDict.js';
@@ -14,8 +16,7 @@ const EMPTY_STATUSES = new Set([204, 205, 304]);
 
 export class HttpContext {
 
-    protected startedAt = Date.now();
-    protected index = -1;
+    @dep() logger!: Logger;
 
     host: string;
     url: URL;
@@ -27,13 +28,17 @@ export class HttpContext {
     responseHeaders: HttpDict = {};
     responseBody: HttpResponseBody = undefined;
 
+    startedAt = Date.now();
+    params: Record<string, string> = {};
+    state: Record<string, any> = {};
+
     constructor(
         readonly server: HttpServer,
         readonly request: IncomingMessage,
         readonly response: ServerResponse,
     ) {
         this.requestHeaders = (this.request as any).headersDistinct; // Added in 18.3.0, TS doesn't know yet
-        this.host = this.requestHeaders['host'][0];
+        this.host = this.getRequestHeader('host');
         this.url = new URL(this.request.url ?? '', `http://${this.host}`);
         this.query = searchParamsToDict(this.url.searchParams);
     }
@@ -42,12 +47,12 @@ export class HttpContext {
         return (this.request.method ?? '').toUpperCase();
     }
 
-    get body() {
-        return this.requestBody;
+    getRequestHeader(name: string, fallback = ''): string {
+        return this.requestHeaders[name.toLowerCase()]?.[0] ?? fallback;
     }
 
-    set body(body) {
-        this.responseBody = body;
+    setResponseHeader(name: string, value: string | string[]) {
+        this.responseHeaders[name] = Array.isArray(value) ? value : [value];
     }
 
     async readRequestBody(type: RequestBodyType = 'auto') {
@@ -92,7 +97,7 @@ export class HttpContext {
     }
 
     inferRequestBodyType(): RequestBodyType {
-        const contentType = this.requestHeaders['content-type']?.[0] ?? 'application/x-octet-stream';
+        const contentType = this.getRequestHeader('content-type', 'application/x-octet-stream');
         if (/application\/json/.test(contentType)) {
             return 'json';
         }
@@ -135,8 +140,8 @@ export class HttpContext {
         const [inferredContentType, buffer] = this.inferResponseBody();
         const contentType = response.getHeader('content-type') ?? inferredContentType;
         const contentLength = buffer.byteLength;
-        response.setHeader('content-type', contentType);
-        response.setHeader('content-length', contentLength);
+        response.setHeader('Content-Type', contentType);
+        response.setHeader('Content-Length', contentLength);
         response.writeHead(this.status);
         response.end(buffer);
     }

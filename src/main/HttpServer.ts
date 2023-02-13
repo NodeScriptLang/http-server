@@ -1,3 +1,4 @@
+import { NotFoundError } from '@nodescript/errors';
 import { Logger } from '@nodescript/logger';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
 import { config } from 'mesh-config';
@@ -74,7 +75,9 @@ export class HttpServer {
             const mesh = this.createRequestScope();
             const handler = mesh.resolve<HttpHandler>(HTTP_HANDLER_KEY);
             const ctx = new HttpContext(this, req, res);
-            await handler.handle(ctx, () => Promise.resolve());
+            await handler.handle(ctx, () => {
+                throw new NotFoundError(`${ctx.method} ${ctx.url.pathname}`);
+            });
             ctx.sendResponse();
         } catch (error) {
             // Minimal error handling here, should be implemented by error handler
