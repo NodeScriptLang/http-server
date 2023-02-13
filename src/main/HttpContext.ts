@@ -18,10 +18,10 @@ export class HttpContext {
 
     @dep() logger!: Logger;
 
-    host: string;
-    url: URL;
-    query: HttpDict;
-    requestHeaders: HttpDict;
+    readonly host: string;
+    readonly url: URL;
+    readonly query: HttpDict;
+    readonly requestHeaders: HttpDict;
     requestBody: any = undefined;
 
     status = 404;
@@ -45,6 +45,10 @@ export class HttpContext {
 
     get method() {
         return (this.request.method ?? '').toUpperCase();
+    }
+
+    get path() {
+        return this.url.pathname;
     }
 
     getRequestHeader(name: string, fallback = ''): string {
