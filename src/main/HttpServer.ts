@@ -79,13 +79,14 @@ export class HttpServer {
                 throw new NotFoundError(`${ctx.method} ${ctx.url.pathname}`);
             });
             ctx.sendResponse();
-        } catch (error) {
+        } catch (error: any) {
             // Minimal error handling here, should be implemented by error handler
+            const status = Number(error.status) || 500;
             this.logger.error('HttpServer: request failed', { error });
-            res.writeHead(500, { 'content-type': 'application/json' });
+            res.writeHead(status, { 'content-type': 'application/json' });
             res.end(JSON.stringify({
-                name: 'InternalServerError',
-                message: 'The request cannot be processed'
+                name: error.name,
+                message: error.message,
             }));
         }
     }
