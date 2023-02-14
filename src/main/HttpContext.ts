@@ -29,8 +29,8 @@ export class HttpContext {
     responseBody: HttpResponseBody = undefined;
 
     startedAt = Date.now();
-    params: Record<string, string> = {};
-    state: Record<string, any> = {};
+    params: Record<string, string> = Object.create(null);
+    state: Record<string, any> = Object.create(null);
 
     constructor(
         readonly server: HttpServer,
@@ -57,6 +57,13 @@ export class HttpContext {
 
     setResponseHeader(name: string, value: string | string[]) {
         this.responseHeaders[name] = Array.isArray(value) ? value : [value];
+    }
+
+    addResponseHeader(name: string, value: string | string[]) {
+        const arr = this.responseHeaders[name] ?? [];
+        const values = Array.isArray(value) ? value : [value];
+        arr.push(...values);
+        this.responseHeaders[name] = arr;
     }
 
     async readRequestBody(type: RequestBodyType = 'auto') {
