@@ -1,6 +1,6 @@
 {
     "name": "@nodescript/http-server",
-    "version": "1.0.9",
+    "version": "1.0.10",
     "description": "Standard HTTP Server",
     "type": "module",
     "sideEffects": false,
