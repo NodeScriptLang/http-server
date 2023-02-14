@@ -38,7 +38,7 @@ export class StandardHttpHandler implements HttpHandler {
             const logLevel = ctx.status >= 500 ? 'error' : 'info';
             ctx.logger[logLevel](error ? `Http Error` : `Http Request`, {
                 method: ctx.method,
-                url: ctx.url,
+                url: ctx.path,
                 status: ctx.status,
                 actor: ctx.state.actor,
                 latency,
@@ -48,7 +48,7 @@ export class StandardHttpHandler implements HttpHandler {
             });
             this.latency.addMillis(latency, {
                 method: ctx.method,
-                url: ctx.url.pathname,
+                url: ctx.path,
                 status: ctx.status,
             });
             ctx.setResponseHeader('Server-Timing', `total;dur=${latency}`);
