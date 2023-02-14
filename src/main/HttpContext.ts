@@ -79,7 +79,7 @@ export class HttpContext {
         const actualType = type === 'auto' ? this.inferRequestBodyType() : type;
         switch (actualType) {
             case 'json': {
-                this.requestBody = JSON.parse(raw.toString('utf-8'));
+                this.requestBody = JSON.parse(raw.toString('utf-8') || '{}');
                 break;
             }
             case 'text': {
