@@ -9,7 +9,7 @@ import { HttpContext } from './HttpContext.js';
 import { HttpHandler } from './HttpHandler.js';
 
 const HTTP_HANDLER_KEY = 'HttpServer:handler';
-const HTTP_SCOPE_KEY = 'HttpServer:requestScope';
+const HTTP_SCOPE_KEY = 'HttpServer:scope';
 
 export class HttpServer {
 
