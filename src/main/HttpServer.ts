@@ -73,8 +73,9 @@ export class HttpServer {
     protected async handleRequest(req: IncomingMessage, res: ServerResponse) {
         try {
             const mesh = this.createRequestScope();
-            const handler = mesh.resolve<HttpHandler>(HTTP_HANDLER_KEY);
             const ctx = new HttpContext(this, req, res);
+            mesh.constant(HttpContext, ctx);
+            const handler = mesh.resolve<HttpHandler>(HTTP_HANDLER_KEY);
             await handler.handle(ctx, () => {
                 throw new NotFoundError(`${ctx.method} ${ctx.url.pathname}`);
             });
