@@ -32,6 +32,8 @@ export class HttpContext {
     params: Record<string, string> = Object.create(null);
     state: Record<string, any> = Object.create(null);
 
+    protected _requestBodyRead = false;
+
     constructor(
         readonly server: HttpServer,
         readonly request: IncomingMessage,
@@ -70,7 +72,7 @@ export class HttpContext {
         if (this.method === 'GET' || this.method === 'HEAD' || this.method === 'DELETE') {
             return null;
         }
-        if (this.request.complete) {
+        if (this._requestBodyRead) {
             return this.requestBody;
         }
         const raw = await this.readRequestBodyRaw();
@@ -94,6 +96,7 @@ export class HttpContext {
             default:
                 this.requestBody = raw;
         }
+        this._requestBodyRead = true;
         return this.requestBody;
     }
 
