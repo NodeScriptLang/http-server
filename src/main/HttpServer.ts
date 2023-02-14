@@ -74,6 +74,7 @@ export class HttpServer {
         try {
             const mesh = this.createRequestScope();
             const ctx = new HttpContext(this, req, res);
+            mesh.connect(ctx);
             mesh.constant(HttpContext, ctx);
             const handler = mesh.resolve<HttpHandler>(HTTP_HANDLER_KEY);
             await handler.handle(ctx, () => {
