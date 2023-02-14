@@ -20,7 +20,7 @@ export class HttpServer {
     @dep({ key: HTTP_SCOPE_KEY }) createRequestScope!: () => Mesh;
 
     @config({ default: 8080 }) HTTP_PORT!: number;
-    @config({ default: '0.0.0.0' }) HTTP_ADDRESS!: string;
+    @config({ default: '' }) HTTP_ADDRESS!: string;
     @config({ default: 300000 }) HTTP_TIMEOUT!: number;
     @config({ default: 5000 }) HTTP_SHUTDOWN_DELAY!: number;
     @config({ default: 5 * 1024 * 1024 }) HTTP_BODY_LIMIT!: number;
@@ -42,7 +42,7 @@ export class HttpServer {
         server.setTimeout(this.HTTP_TIMEOUT);
         await new Promise<void>((resolve, reject) => {
             server.on('error', err => reject(err));
-            server.listen(this.HTTP_PORT, this.HTTP_ADDRESS, () => {
+            server.listen(this.HTTP_PORT, this.HTTP_ADDRESS || undefined, () => {
                 this.logger.info(`Listening on ${this.HTTP_PORT}`);
                 resolve();
             });
