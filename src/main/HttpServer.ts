@@ -1,25 +1,33 @@
+import { NotFoundError } from '@nodescript/errors';
 import { Logger } from '@nodescript/logger';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
 import { config } from 'mesh-config';
 import { dep, Mesh } from 'mesh-ioc';
 import { Socket } from 'net';
 
-import { RequestHandlerClass } from '../http-server.js';
 import { HttpContext } from './HttpContext.js';
+import { HttpHandler } from './HttpHandler.js';
+
+const HTTP_HANDLER_KEY = 'HttpServer:handler';
+const HTTP_SCOPE_KEY = 'HttpServer:requestScope';
 
 export class HttpServer {
 
-    @dep() logger!: Logger;
-    @dep({ key: 'httpRequestScope' }) createRequestScope!: () => Mesh;
+    static SCOPE = HTTP_SCOPE_KEY;
+    static HANDLER = HTTP_HANDLER_KEY;
 
+    @dep() logger!: Logger;
+    @dep({ key: HTTP_SCOPE_KEY }) createRequestScope!: () => Mesh;
+
+    @config({ default: 8080 }) HTTP_PORT!: number;
+    @config({ default: '0.0.0.0' }) HTTP_ADDRESS!: string;
     @config({ default: 300000 }) HTTP_TIMEOUT!: number;
     @config({ default: 5000 }) HTTP_SHUTDOWN_DELAY!: number;
+    @config({ default: 5 * 1024 * 1024 }) HTTP_BODY_LIMIT!: number;
 
     protected server: Server | null = null;
     protected requestsPerSocket = new Map<Socket, number>();
     protected stopping = false;
-
-    handlers: RequestHandlerClass[] = [];
 
     async start() {
         if (this.server) {
@@ -27,9 +35,18 @@ export class HttpServer {
         }
         this.stopping = false;
         this.requestsPerSocket.clear();
-        this.server = createServer((req, res) => this.handleRequest(req, res));
-        this.server.on('connection', sock => this.onConnection(sock));
-        this.server.on('request', (req, res) => this.onRequest(req, res));
+        const server = createServer((req, res) => this.handleRequest(req, res));
+        this.server = server;
+        server.on('connection', sock => this.onConnection(sock));
+        server.on('request', (req, res) => this.onRequest(req, res));
+        server.setTimeout(this.HTTP_TIMEOUT);
+        await new Promise<void>((resolve, reject) => {
+            server.on('error', err => reject(err));
+            server.listen(this.HTTP_PORT, this.HTTP_ADDRESS, () => {
+                this.logger.info(`Listening on ${this.HTTP_PORT}`);
+                resolve();
+            });
+        });
     }
 
     async stop() {
@@ -49,31 +66,43 @@ export class HttpServer {
         this.server = null;
     }
 
-    async addRequestHandler(handlerClass: RequestHandlerClass) {
-        this.handlers.push(handlerClass);
+    getServer() {
+        return this.server;
     }
 
     protected async handleRequest(req: IncomingMessage, res: ServerResponse) {
         try {
             const mesh = this.createRequestScope();
-            const context = new HttpContext(this, mesh, req, res);
-            mesh.connect(context);
-            await context.next();
-            // TODO send response
-            // TODO add middleware
-        } catch (error) {
-            // TODO handle standard errors
+            const handler = mesh.resolve<HttpHandler>(HTTP_HANDLER_KEY);
+            const ctx = new HttpContext(this, req, res);
+            await handler.handle(ctx, () => {
+                throw new NotFoundError(`${ctx.method} ${ctx.url.pathname}`);
+            });
+            ctx.sendResponse();
+        } catch (error: any) {
+            // Minimal error handling here, should be implemented by error handler
+            const status = Number(error.status) || 500;
+            this.logger.error('HttpServer: request failed', { error });
+            res.writeHead(status, { 'content-type': 'application/json' });
+            res.end(JSON.stringify({
+                name: error.name,
+                message: error.message,
+            }));
         }
     }
 
+    /**
+     * Tracks the number of pending requests per socket, so that the server could close gracefully
+     */
     protected onConnection(sock: Socket) {
-        // Track the number of pending requests per socket, so that we could close gracefully
         this.requestsPerSocket.set(sock, 0);
         sock.once('close', () => this.requestsPerSocket.delete(sock));
     }
 
+    /**
+     * Tracks requests per connection, close connection during shutdown, when requests are served.
+     */
     protected onRequest(req: IncomingMessage, res: ServerResponse) {
-        // Track requests per connection, close connection during shutdown, when requests are served
         const { socket } = req;
         this.requestsPerSocket.set(socket, this.getSocketRequests(socket) + 1);
         res.once('finish', () => {
