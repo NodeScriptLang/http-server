@@ -60,6 +60,9 @@ export class HttpContext {
     }
 
     async readRequestBody(type: RequestBodyType = 'auto') {
+        if (this.method === 'GET' || this.method === 'HEAD' || this.method === 'DELETE') {
+            return null;
+        }
         if (this.request.complete) {
             return this.requestBody;
         }
