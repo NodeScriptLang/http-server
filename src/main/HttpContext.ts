@@ -24,7 +24,7 @@ export class HttpContext {
     readonly requestHeaders: HttpDict;
     requestBody: any = undefined;
 
-    status = 404;
+    status = 200;
     responseHeaders: HttpDict = {};
     responseBody: HttpResponseBody = undefined;
 

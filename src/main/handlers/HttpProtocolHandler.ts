@@ -44,6 +44,7 @@ export abstract class HttpProtocolHandler<P> implements HttpHandler {
             const res = await methodImpl.call(domainImpl, decodedParams);
             const decoded = resSchema.decode(res);
             this.logger.debug(`<<< ${domainName}.${methodName}`, decoded);
+            ctx.status = 200;
             ctx.responseBody = decoded;
         } finally {
             this.methodStats.emit({
