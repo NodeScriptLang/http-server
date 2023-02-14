@@ -36,7 +36,7 @@ export abstract class HttpProtocolHandler<P> implements HttpHandler {
             if (ctx.method !== method) {
                 return await next();
             }
-            const params = this.parseParams(ctx);
+            const params = await this.parseParams(ctx);
             const decodedParams = reqSchema.decode(params, { strictRequired: true });
             this.logger.debug(`>>> ${domainName}.${methodName}`, decodedParams);
             const domainImpl = (this.protocolImpl as any)[domainName];
