@@ -46,7 +46,7 @@
         "@nodescript/logger": "^1.4.1",
         "@nodescript/metrics": "^1.1.1",
         "@nodescript/pathmatcher": "^1.2.0",
-        "@nodescript/protocomm": "^0.5.5",
+        "@nodescript/protocomm": "^0.6.0",
         "mesh-config": "^1.0.0",
         "mesh-ioc": "^3.1.4",
         "nanoevent": "^1.0.0"

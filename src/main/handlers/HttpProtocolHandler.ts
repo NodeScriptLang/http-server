@@ -46,12 +46,19 @@ export abstract class HttpProtocolHandler<P> implements HttpHandler {
             this.logger.debug(`<<< ${domainName}.${methodName}`, decoded);
             ctx.status = 200;
             ctx.responseBody = decoded;
-        } finally {
             this.methodStats.emit({
                 domain: domainName,
                 method: methodName,
                 latency: Date.now() - startedAt,
             });
+        } catch (error: any) {
+            this.methodStats.emit({
+                domain: domainName,
+                method: methodName,
+                latency: Date.now() - startedAt,
+                error: error.name,
+            });
+            throw error;
         }
     }
 
