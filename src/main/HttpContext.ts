@@ -68,6 +68,12 @@ export class HttpContext {
         this.responseHeaders[name] = arr;
     }
 
+    addResponseHeaders(headers: HttpDict) {
+        for (const [name, values] of Object.entries(headers)) {
+            this.addResponseHeader(name, values);
+        }
+    }
+
     async readRequestBody(type: RequestBodyType = 'auto') {
         if (this.method === 'GET' || this.method === 'HEAD' || this.method === 'DELETE') {
             return null;
