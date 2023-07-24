@@ -26,9 +26,9 @@ export class StandardHttpHandler implements HttpHandler {
             await next();
         } catch (err: any) {
             error = err;
-            ctx.status = Number(error.status) || 500;
-            const isServerError = ctx.status >= 500;
-            const presentedErr = isServerError ? new ServerError() : error;
+            const hasStatus = typeof error.status === 'number' && error.status >= 100 && error.status < 599;
+            ctx.status = hasStatus ? error.status : 500;
+            const presentedErr = hasStatus ? error : new ServerError();
             ctx.responseBody = {
                 name: presentedErr.name,
                 message: presentedErr.message,
