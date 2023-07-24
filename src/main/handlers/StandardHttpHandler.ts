@@ -32,6 +32,7 @@ export class StandardHttpHandler implements HttpHandler {
             ctx.responseBody = {
                 name: presentedErr.name,
                 message: presentedErr.message,
+                details: presentedErr.details,
             };
         } finally {
             const latency = Date.now() - ctx.startedAt;
