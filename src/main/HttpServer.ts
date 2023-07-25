@@ -105,7 +105,7 @@ export class HttpServer {
      * Tracks requests per connection, close connection during shutdown, when requests are served.
      */
     protected onRequest(req: IncomingMessage, res: ServerResponse) {
-        const { socket } = req;
+        const socket = req.socket ?? (req as any).client;
         this.requestsPerSocket.set(socket, this.getSocketRequests(socket) + 1);
         res.once('finish', () => {
             const pending = this.getSocketRequests(socket) - 1;
