@@ -1,7 +1,4 @@
 {
     "reporter": "spec",
-    "spec": "./out/**/*.test.js",
-    "require": [
-        "./out/test/dotenv.js"
-    ]
+    "spec": "./out/**/*.test.js"
 }

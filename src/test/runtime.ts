@@ -1,9 +1,13 @@
 import { ConsoleLogger, Logger, LogLevel } from '@nodescript/logger';
+import dotenv from 'dotenv';
 import { Config, ProcessEnvConfig } from 'mesh-config';
 import { dep, Mesh } from 'mesh-ioc';
 
 import { HttpServer } from '../main/index.js';
 import { BarMiddleware, CatchMiddleware, EndpointHandler, FooMiddleware, ThrowMiddleware } from './handlers.js';
+
+dotenv.config();
+dotenv.config({ path: '.env.test' });
 
 export class TestRuntime {
 
