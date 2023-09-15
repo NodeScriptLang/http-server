@@ -22,7 +22,7 @@ export class HttpServer {
     @config({ default: 8080 }) HTTP_PORT!: number;
     @config({ default: '' }) HTTP_ADDRESS!: string;
     @config({ default: 120_000 }) HTTP_TIMEOUT!: number;
-    @config({ default: 5000 }) HTTP_SHUTDOWN_DELAY!: number;
+    @config({ default: 2000 }) HTTP_SHUTDOWN_DELAY!: number;
     @config({ default: 5 * 1024 * 1024 }) HTTP_BODY_LIMIT!: number;
 
     protected server: Server | null = null;
