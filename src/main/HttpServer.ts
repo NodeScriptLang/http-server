@@ -21,7 +21,7 @@ export class HttpServer {
 
     @config({ default: 8080 }) HTTP_PORT!: number;
     @config({ default: '' }) HTTP_ADDRESS!: string;
-    @config({ default: 300000 }) HTTP_TIMEOUT!: number;
+    @config({ default: 120_000 }) HTTP_TIMEOUT!: number;
     @config({ default: 5000 }) HTTP_SHUTDOWN_DELAY!: number;
     @config({ default: 5 * 1024 * 1024 }) HTTP_BODY_LIMIT!: number;
 
@@ -59,7 +59,7 @@ export class HttpServer {
         await new Promise(r => setTimeout(r, this.HTTP_SHUTDOWN_DELAY));
         this.logger.info('Waiting for existing requests to finish');
         const closePromise = new Promise<void>((resolve, reject) => server.close(err => err ? reject(err) : resolve()));
-        const timeout = setTimeout(() => this.destroyAllSockets());
+        const timeout = setTimeout(() => this.destroyAllSockets(), this.HTTP_TIMEOUT);
         this.closeIdleSockets();
         await closePromise;
         clearTimeout(timeout);
