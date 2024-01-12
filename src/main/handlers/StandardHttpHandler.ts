@@ -1,4 +1,5 @@
 import { ServerError } from '@nodescript/errors';
+import { StructuredLogHttpRequest } from '@nodescript/logger';
 import { HistogramMetric, metric } from '@nodescript/metrics';
 
 import { HttpContext } from '../HttpContext.js';
@@ -37,13 +38,16 @@ export class StandardHttpHandler implements HttpHandler {
         } finally {
             const latency = Date.now() - ctx.startedAt;
             const logLevel = ctx.status >= 500 ? 'error' : 'info';
-            ctx.logger[logLevel](error ? `Http Error` : `Http Request`, {
-                method: ctx.method,
-                url: ctx.path,
+            const httpRequest: StructuredLogHttpRequest = {
+                requestMethod: ctx.method,
+                requestUrl: ctx.path,
                 status: ctx.status,
+                latency: `${latency / 1000}s`,
+                userAgent: ctx.getRequestHeader('user-agent', ''),
+            };
+            ctx.logger[logLevel](error ? `Http Error` : `Http Request`, {
+                httpRequest,
                 actor: ctx.state.actor,
-                latency,
-                agent: ctx.requestHeaders['user-agent'],
                 requestId: ctx.requestHeaders['x-request-id'],
                 error,
             });
