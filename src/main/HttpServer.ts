@@ -1,33 +1,41 @@
 import { NotFoundError } from '@nodescript/errors';
 import { Logger } from '@nodescript/logger';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
-import { config } from 'mesh-config';
-import { dep, Mesh } from 'mesh-ioc';
+import { dep } from 'mesh-ioc';
 import { Socket } from 'net';
 
 import { HttpContext } from './HttpContext.js';
-import { HttpHandler } from './HttpHandler.js';
+import { HttpNext } from './HttpHandler.js';
 
-const HTTP_HANDLER_KEY = 'HttpServer:handler';
-const HTTP_SCOPE_KEY = 'HttpServer:scope';
+export interface HttpServerConfig {
+    port: number;
+    address: string;
+    socketTimeout: number;
+    shutdownDelay: number;
+    requestBodyLimitBytes: number;
+}
 
-export class HttpServer {
-
-    static SCOPE = HTTP_SCOPE_KEY;
-    static HANDLER = HTTP_HANDLER_KEY;
+export abstract class HttpServer {
 
     @dep() logger!: Logger;
-    @dep({ key: HTTP_SCOPE_KEY }) createRequestScope!: () => Mesh;
 
-    @config({ default: 8080 }) HTTP_PORT!: number;
-    @config({ default: '' }) HTTP_ADDRESS!: string;
-    @config({ default: 120_000 }) HTTP_TIMEOUT!: number;
-    @config({ default: 2000 }) HTTP_SHUTDOWN_DELAY!: number;
-    @config({ default: 5 * 1024 * 1024 }) HTTP_BODY_LIMIT!: number;
-
+    protected config: HttpServerConfig;
     protected server: Server | null = null;
     protected requestsPerSocket = new Map<Socket, number>();
     protected stopping = false;
+
+    constructor(config: Partial<HttpServerConfig>) {
+        this.config = {
+            port: 8080,
+            address: '',
+            socketTimeout: 60_000,
+            shutdownDelay: 2_000,
+            requestBodyLimitBytes: 5 * 1024 * 1024,
+            ...config,
+        };
+    }
+
+    abstract handle(ctx: HttpContext, next: HttpNext): Promise<void>;
 
     async start() {
         if (this.server) {
@@ -39,11 +47,11 @@ export class HttpServer {
         this.server = server;
         server.on('connection', sock => this.onConnection(sock));
         server.on('request', (req, res) => this.onRequest(req, res));
-        server.setTimeout(this.HTTP_TIMEOUT);
+        server.setTimeout(this.config.socketTimeout);
         await new Promise<void>((resolve, reject) => {
             server.on('error', err => reject(err));
-            server.listen(this.HTTP_PORT, this.HTTP_ADDRESS || undefined, () => {
-                this.logger.info(`Listening on ${this.HTTP_PORT}`);
+            server.listen(this.config.port, this.config.address || undefined, () => {
+                this.logger.info(`Listening on ${this.config.port}`);
                 resolve();
             });
         });
@@ -56,10 +64,10 @@ export class HttpServer {
         }
         this.stopping = true;
         // This is required in environments like K8s where traffic is still being sent after SIGTERM
-        await new Promise(r => setTimeout(r, this.HTTP_SHUTDOWN_DELAY));
+        await new Promise(r => setTimeout(r, this.config.shutdownDelay));
         this.logger.info('Waiting for existing requests to finish');
         const closePromise = new Promise<void>((resolve, reject) => server.close(err => err ? reject(err) : resolve()));
-        const timeout = setTimeout(() => this.destroyAllSockets(), this.HTTP_TIMEOUT);
+        const timeout = setTimeout(() => this.destroyAllSockets(), this.config.socketTimeout);
         this.closeIdleSockets();
         await closePromise;
         clearTimeout(timeout);
@@ -72,12 +80,8 @@ export class HttpServer {
 
     protected async handleRequest(req: IncomingMessage, res: ServerResponse) {
         try {
-            const mesh = this.createRequestScope();
-            const ctx = new HttpContext(this, req, res);
-            mesh.connect(ctx);
-            mesh.constant(HttpContext, ctx);
-            const handler = mesh.resolve<HttpHandler>(HTTP_HANDLER_KEY);
-            await handler.handle(ctx, () => {
+            const ctx = new HttpContext(this.config, req, res);
+            await this.handle(ctx, () => {
                 throw new NotFoundError(`${ctx.method} ${ctx.url.pathname}`);
             });
             ctx.sendResponse();
