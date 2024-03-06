@@ -1,4 +1,5 @@
 export * from './handlers/HttpCorsHandler.js';
+export * from './handlers/HttpErrorHandler.js';
 export * from './handlers/HttpMetricsHandler.js';
 export * from './handlers/HttpProtocolHandler.js';
 export * from './handlers/StandardHttpHandler.js';
