@@ -1,17 +1,24 @@
 import { ConsoleLogger, Logger, LogLevel } from '@nodescript/logger';
 import dotenv from 'dotenv';
 import { Config, ProcessEnvConfig } from 'mesh-config';
-import { dep, Mesh } from 'mesh-ioc';
+import { dep, Mesh, ServiceConstructor } from 'mesh-ioc';
 
-import { HttpServer } from '../main/index.js';
+import { HttpContext, HttpHandler, HttpNext, HttpServer } from '../main/index.js';
 import { BarMiddleware, CatchMiddleware, EndpointHandler, FooMiddleware, ThrowMiddleware } from './handlers.js';
 
 dotenv.config();
 dotenv.config({ path: '.env.test' });
 
+export class TestHttpServer extends HttpServer {
+    async handle(ctx: HttpContext, next: HttpNext): Promise<void> {
+        const handler = runtime.requestScope.resolve<HttpHandler>('Handler');
+        await handler.handle(ctx, next);
+    }
+}
+
 export class TestRuntime {
 
-    @dep({ cache: false }) server!: HttpServer;
+    @dep({ cache: false }) server!: TestHttpServer;
     @dep({ cache: false }) logger!: Logger;
     @dep({ cache: false }) config!: Config;
 
@@ -25,8 +32,8 @@ export class TestRuntime {
         this.mesh.connect(this);
         this.mesh.service(Logger, ConsoleLogger);
         this.mesh.service(Config, ProcessEnvConfig);
-        this.mesh.service(HttpServer);
-        this.mesh.constant(HttpServer.SCOPE, () => this.requestScope);
+        this.mesh.service(TestHttpServer);
+        this.mesh.alias(HttpServer, TestHttpServer);
         this.requestScope.service(FooMiddleware);
         this.requestScope.service(BarMiddleware);
         this.requestScope.service(CatchMiddleware);
@@ -46,6 +53,10 @@ export class TestRuntime {
 
     getUrl(path = '/') {
         return `http://127.0.0.1:${this.port}${path}`;
+    }
+
+    setHandler(handler: ServiceConstructor<HttpHandler>) {
+        this.requestScope.service('Handler', handler);
     }
 
 }

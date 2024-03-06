@@ -1,11 +1,9 @@
 import { InvalidStateError, RequestSizeExceededError } from '@nodescript/errors';
-import { Logger } from '@nodescript/logger';
 import { IncomingMessage, ServerResponse } from 'http';
-import { dep } from 'mesh-ioc';
 import { Stream } from 'stream';
 
 import { HttpDict } from './HttpDict.js';
-import { HttpServer } from './HttpServer.js';
+import { HttpServerConfig } from './HttpServer.js';
 import { searchParamsToDict } from './util.js';
 
 export type RequestBodyType = 'auto' | 'raw' | 'json' | 'text' | 'urlencoded';
@@ -15,8 +13,6 @@ export type HttpResponseBody = Stream | Buffer | string | object | undefined;
 const EMPTY_STATUSES = new Set([204, 205, 304]);
 
 export class HttpContext {
-
-    @dep() logger!: Logger;
 
     readonly host: string;
     readonly url: URL;
@@ -35,7 +31,7 @@ export class HttpContext {
     protected _requestBodyRead = false;
 
     constructor(
-        readonly server: HttpServer,
+        readonly config: HttpServerConfig,
         readonly request: IncomingMessage,
         readonly response: ServerResponse,
     ) {
@@ -111,7 +107,7 @@ export class HttpContext {
         const chunks: Buffer[] = [];
         for await (const chunk of this.request) {
             bytesRead += chunk.byteLength ?? chunk.length;
-            if (bytesRead > this.server.HTTP_BODY_LIMIT) {
+            if (bytesRead > this.config.requestBodyLimitBytes) {
                 throw new RequestSizeExceededError();
             }
             chunks.push(chunk);

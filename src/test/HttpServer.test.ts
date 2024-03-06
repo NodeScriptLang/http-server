@@ -1,6 +1,5 @@
 import assert from 'assert';
 
-import { HttpServer } from '../main/index.js';
 import { EchoHandler } from './handlers.js';
 import { runtime } from './runtime.js';
 
@@ -14,7 +13,7 @@ describe('HttpServer', () => {
 
     it('echoes request details', async () => {
         await runtime.server.start();
-        runtime.requestScope.service(HttpServer.HANDLER, EchoHandler);
+        runtime.setHandler(EchoHandler);
         const res = await fetch(runtime.getUrl('/hello?foo=one&bar=two&foo=three'), {
             method: 'post',
             headers: {
