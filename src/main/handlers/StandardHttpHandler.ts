@@ -1,4 +1,3 @@
-import { ServerError } from '@nodescript/errors';
 import { Logger, StructuredLogHttpRequest } from '@nodescript/logger';
 import { HistogramMetric, metric } from '@nodescript/metrics';
 import { dep } from 'mesh-ioc';
