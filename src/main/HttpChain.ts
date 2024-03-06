@@ -2,21 +2,16 @@ import { HttpContext } from './HttpContext.js';
 import { HttpHandler, HttpNext } from './HttpHandler.js';
 import { composeHandlers } from './util.js';
 
-export abstract class HttpChain implements HttpHandler {
+export class HttpChain implements HttpHandler {
 
-    abstract handlers: HttpHandler[];
+    composed: HttpHandler;
 
-    protected composed: HttpHandler | null = null;
-
-    protected getComposedHandler() {
-        if (!this.composed) {
-            this.composed = composeHandlers(this.handlers);
-        }
-        return this.composed;
+    constructor(handlers: HttpHandler[] = []) {
+        this.composed = composeHandlers(handlers);
     }
 
     async handle(ctx: HttpContext, next: HttpNext) {
-        return await this.getComposedHandler().handle(ctx, next);
+        return await this.composed.handle(ctx, next);
     }
 
 }
