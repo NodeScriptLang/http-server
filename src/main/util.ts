@@ -2,7 +2,7 @@ import { matchPath } from '@nodescript/pathmatcher';
 
 import { HttpContext } from './HttpContext.js';
 import { HttpDict } from './HttpDict.js';
-import { HttpHandlerFn, HttpNext } from './HttpHandler.js';
+import { HttpHandler, HttpHandlerFn, HttpNext } from './HttpHandler.js';
 import { HttpRoute } from './HttpRoute.js';
 
 export function headersToDict(headers: Record<string, string | string[] | undefined>): HttpDict {
@@ -22,6 +22,15 @@ export function searchParamsToDict(search: URLSearchParams): HttpDict {
         dict[key] = values;
     }
     return dict;
+}
+
+export function composeHandlers(handlers: HttpHandler[]): HttpHandler {
+    const fns = handlers.map<HttpHandlerFn>(_ => {
+        return (ctx, next) => _.handle(ctx, next);
+    });
+    return {
+        handle: compose(fns),
+    };
 }
 
 export function compose(fns: HttpHandlerFn[]): HttpHandlerFn {
