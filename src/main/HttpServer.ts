@@ -1,6 +1,7 @@
 import { NotFoundError } from '@nodescript/errors';
 import { Logger } from '@nodescript/logger';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
+import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 import { Socket } from 'net';
 
@@ -17,6 +18,12 @@ export interface HttpServerConfig {
 
 export abstract class HttpServer {
 
+    @config({ default: 8080 }) HTTP_PORT!: number;
+    @config({ default: '' }) HTTP_ADDRESS!: string;
+    @config({ default: 120_000 }) HTTP_TIMEOUT!: number;
+    @config({ default: 2000 }) HTTP_SHUTDOWN_DELAY!: number;
+    @config({ default: 5 * 1024 * 1024 }) HTTP_REQUEST_BODY_LIMIT_BYTES!: number;
+
     @dep() logger!: Logger;
 
     protected config: HttpServerConfig;
@@ -24,14 +31,13 @@ export abstract class HttpServer {
     protected requestsPerSocket = new Map<Socket, number>();
     protected stopping = false;
 
-    constructor(config: Partial<HttpServerConfig>) {
+    constructor() {
         this.config = {
-            port: 8080,
-            address: '',
-            socketTimeout: 60_000,
-            shutdownDelay: 2_000,
-            requestBodyLimitBytes: 5 * 1024 * 1024,
-            ...config,
+            port: this.HTTP_PORT,
+            address: this.HTTP_ADDRESS,
+            socketTimeout: this.HTTP_TIMEOUT,
+            shutdownDelay: this.HTTP_SHUTDOWN_DELAY,
+            requestBodyLimitBytes: this.HTTP_REQUEST_BODY_LIMIT_BYTES,
         };
     }
 

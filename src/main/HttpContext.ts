@@ -1,7 +1,5 @@
 import { InvalidStateError, RequestSizeExceededError } from '@nodescript/errors';
-import { Logger } from '@nodescript/logger';
 import { IncomingMessage, ServerResponse } from 'http';
-import { dep } from 'mesh-ioc';
 import { Stream } from 'stream';
 
 import { HttpDict } from './HttpDict.js';
@@ -15,8 +13,6 @@ export type HttpResponseBody = Stream | Buffer | string | object | undefined;
 const EMPTY_STATUSES = new Set([204, 205, 304]);
 
 export class HttpContext {
-
-    @dep() logger!: Logger;
 
     readonly host: string;
     readonly url: URL;

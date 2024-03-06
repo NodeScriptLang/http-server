@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { dep } from 'mesh-ioc';
 
-import { HttpChain, HttpServer } from '../main/index.js';
+import { HttpChain } from '../main/index.js';
 import { BarMiddleware, CatchMiddleware, EndpointHandler, FooMiddleware, ThrowMiddleware } from './handlers.js';
 import { runtime } from './runtime.js';
 
@@ -18,7 +18,7 @@ describe('HttpChain', () => {
                 this.endpoint,
             ];
         }
-        runtime.requestScope.service(HttpServer.HANDLER, Handler);
+        runtime.setHandler(Handler);
         await runtime.server.start();
         const res = await fetch(runtime.getUrl());
         assert.strictEqual(res.status, 200);
@@ -44,7 +44,7 @@ describe('HttpChain', () => {
                 this.throw,
             ];
         }
-        runtime.requestScope.service(HttpServer.HANDLER, Handler);
+        runtime.setHandler(Handler);
         await runtime.server.start();
         const res = await fetch(runtime.getUrl());
         assert.strictEqual(res.status, 500);

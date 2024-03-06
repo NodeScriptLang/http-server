@@ -1,6 +1,5 @@
 import assert from 'assert';
 
-import { DefaultHttpServer } from '../main/DefaultHttpServer.js';
 import { HttpContext } from '../main/HttpContext.js';
 import { HttpNext } from '../main/HttpHandler.js';
 import { HttpRoute } from '../main/HttpRoute.js';
@@ -39,7 +38,7 @@ describe('HttpRouter', () => {
     }
 
     it('matches simple route', async () => {
-        runtime.requestScope.service(DefaultHttpServer.HANDLER, Handler);
+        runtime.setHandler(Handler);
         await runtime.server.start();
         const res = await fetch(runtime.getUrl('/hello'));
         assert.strictEqual(res.status, 200);
@@ -47,7 +46,7 @@ describe('HttpRouter', () => {
     });
 
     it('matches route with path param', async () => {
-        runtime.requestScope.service(DefaultHttpServer.HANDLER, Handler);
+        runtime.setHandler(Handler);
         await runtime.server.start();
         const res = await fetch(runtime.getUrl('/hello/All'));
         assert.strictEqual(res.status, 200);
@@ -55,7 +54,7 @@ describe('HttpRouter', () => {
     });
 
     it('executes route middleware', async () => {
-        runtime.requestScope.service(DefaultHttpServer.HANDLER, Handler);
+        runtime.setHandler(Handler);
         await runtime.server.start();
         const res = await fetch(runtime.getUrl('/hello/All'));
         assert.strictEqual(res.status, 200);
@@ -64,7 +63,7 @@ describe('HttpRouter', () => {
     });
 
     it('matches POST requests', async () => {
-        runtime.requestScope.service(DefaultHttpServer.HANDLER, Handler);
+        runtime.setHandler(Handler);
         await runtime.server.start();
         const res = await fetch(runtime.getUrl('/respond/403'), {
             method: 'POST',
@@ -73,7 +72,7 @@ describe('HttpRouter', () => {
     });
 
     it('calls next() if nothing matches', async () => {
-        runtime.requestScope.service(DefaultHttpServer.HANDLER, Handler);
+        runtime.setHandler(Handler);
         await runtime.server.start();
         const res = await fetch(runtime.getUrl('/wut'));
         assert.strictEqual(res.status, 404);

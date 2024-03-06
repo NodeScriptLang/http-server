@@ -1,6 +1,7 @@
 import { ServerError } from '@nodescript/errors';
-import { StructuredLogHttpRequest } from '@nodescript/logger';
+import { Logger, StructuredLogHttpRequest } from '@nodescript/logger';
 import { HistogramMetric, metric } from '@nodescript/metrics';
+import { dep } from 'mesh-ioc';
 
 import { HttpContext } from '../HttpContext.js';
 import { HttpHandler, HttpNext } from '../HttpHandler.js';
@@ -17,6 +18,8 @@ import { HttpHandler, HttpNext } from '../HttpHandler.js';
  * Note: it should be bound to global scope because doesn't use request-scoped dependencies.
  */
 export class StandardHttpHandler implements HttpHandler {
+
+    @dep() private logger!: Logger;
 
     @metric()
     latency = new HistogramMetric('app_http_latency', 'HTTP request/response latency');
@@ -45,7 +48,7 @@ export class StandardHttpHandler implements HttpHandler {
                 latency: `${latency / 1000}s`,
                 userAgent: ctx.getRequestHeader('user-agent', ''),
             };
-            ctx.logger[logLevel](error ? `Http Error` : `Http Request`, {
+            this.logger[logLevel](error ? `Http Error` : `Http Request`, {
                 httpRequest,
                 actor: ctx.state.actor,
                 requestId: ctx.requestHeaders['x-request-id'],
