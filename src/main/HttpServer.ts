@@ -57,7 +57,7 @@ export abstract class HttpServer {
         await new Promise<void>((resolve, reject) => {
             server.on('error', err => reject(err));
             server.listen(this.config.port, this.config.address || undefined, () => {
-                this.logger.info(`Listening on ${this.config.port}`);
+                this.logger.info(`${this.constructor.name}: listening on ${this.config.port}`);
                 resolve();
             });
         });
@@ -71,7 +71,7 @@ export abstract class HttpServer {
         this.stopping = true;
         // This is required in environments like K8s where traffic is still being sent after SIGTERM
         await new Promise(r => setTimeout(r, this.config.shutdownDelay));
-        this.logger.info('Waiting for existing requests to finish');
+        this.logger.info(`${this.constructor.name}: waiting for existing requests to finish`);
         const closePromise = new Promise<void>((resolve, reject) => server.close(err => err ? reject(err) : resolve()));
         const timeout = setTimeout(() => this.destroyAllSockets(), this.config.socketTimeout);
         this.closeIdleSockets();
@@ -94,7 +94,7 @@ export abstract class HttpServer {
         } catch (error: any) {
             // Minimal error handling here, should be implemented by error handler
             const status = Number(error.status) || 500;
-            this.logger.error('HttpServer: request failed', { error });
+            this.logger.error(`${this.constructor.name}: request failed`, { error });
             res.writeHead(status, { 'content-type': 'application/json' });
             res.end(JSON.stringify({
                 name: error.name,
