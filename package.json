@@ -32,7 +32,7 @@
     "author": "Boris Okunskiy",
     "license": "ISC",
     "devDependencies": {
-        "@nodescript/eslint-config": "^1.0.0",
+        "@nodescript/eslint-config": "^1.2.0",
         "@types/mocha": "^8.2.3",
         "@types/node": "^18.13.0",
         "dotenv": "^16.0.3",
