@@ -34,21 +34,21 @@
     "devDependencies": {
         "@nodescript/eslint-config": "^1.2.0",
         "@types/mocha": "^8.2.3",
-        "@types/node": "^18.13.0",
-        "dotenv": "^16.0.3",
-        "eslint": "^8.24.0",
-        "mocha": "^9.0.2",
+        "@types/node": "^18.19.22",
+        "dotenv": "^16.4.5",
+        "eslint": "^8.57.0",
+        "mocha": "^9.2.2",
         "pre-commit": "^1.2.2",
-        "typescript": "^4.3.5"
+        "typescript": "^4.9.5"
     },
     "dependencies": {
-        "@nodescript/errors": "^1.1.1",
-        "@nodescript/logger": "^2.0.2",
-        "@nodescript/metrics": "^1.1.1",
+        "@nodescript/errors": "^1.1.4",
+        "@nodescript/logger": "^2.0.5",
+        "@nodescript/metrics": "^1.2.0",
         "@nodescript/pathmatcher": "^1.2.0",
         "@nodescript/protocomm": "^1.0.0",
-        "mesh-config": "^1.0.0",
-        "mesh-ioc": "^3.1.4",
+        "mesh-config": "^1.1.0",
+        "mesh-ioc": "^3.2.0",
         "nanoevent": "^1.0.0"
     }
 }
