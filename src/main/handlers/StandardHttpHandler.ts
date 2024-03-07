@@ -1,5 +1,4 @@
 import { Logger, StructuredLogHttpRequest } from '@nodescript/logger';
-import { HistogramMetric, metric } from '@nodescript/metrics';
 import { dep } from 'mesh-ioc';
 
 import { HttpContext } from '../HttpContext.js';
@@ -23,9 +22,6 @@ export class StandardHttpHandler implements HttpHandler {
 
     errorHandler = new HttpErrorHandler();
 
-    @metric()
-    latency = new HistogramMetric('app_http_latency', 'HTTP request/response latency');
-
     async handle(ctx: HttpContext, next: HttpNext) {
         try {
             await this.errorHandler.handle(ctx, next);
@@ -45,11 +41,6 @@ export class StandardHttpHandler implements HttpHandler {
                 actor: ctx.state.actor,
                 requestId: ctx.requestHeaders['x-request-id'],
                 error,
-            });
-            this.latency.addMillis(latency, {
-                method: ctx.method,
-                url: ctx.path,
-                status: ctx.status,
             });
             ctx.setResponseHeader('Server-Timing', `total;dur=${latency}`);
         }
