@@ -4,9 +4,7 @@ import { Stream } from 'stream';
 
 import { HttpDict } from './HttpDict.js';
 import { HttpServerConfig } from './HttpServer.js';
-import { searchParamsToDict } from './util.js';
-
-export type RequestBodyType = 'auto' | 'raw' | 'json' | 'text' | 'urlencoded';
+import { RequestBodyType, searchParamsToDict } from './util.js';
 
 export type HttpResponseBody = Stream | Buffer | string | object | undefined;
 
@@ -79,30 +77,31 @@ export class HttpContext {
         }
         const raw = await this.readRequestBodyRaw();
         const actualType = type === 'auto' ? this.inferRequestBodyType() : type;
-        switch (actualType) {
-            case 'json': {
-                this.requestBody = JSON.parse(raw.toString('utf-8') || '{}');
-                break;
-            }
-            case 'text': {
-                this.requestBody = raw.toString('utf-8');
-                break;
-            }
-            case 'urlencoded': {
-                const text = raw.toString('utf-8');
-                const search = new URLSearchParams(text);
-                this.requestBody = searchParamsToDict(search);
-                break;
-            }
-            case 'raw':
-            default:
-                this.requestBody = raw;
-        }
+        this.requestBody = this.convertRequestBody(raw, actualType);
         this._requestBodyRead = true;
         return this.requestBody;
     }
 
-    protected async readRequestBodyRaw(): Promise<Buffer> {
+    async convertRequestBody(raw: Buffer, type: RequestBodyType = 'raw') {
+        switch (type) {
+            case 'json': {
+                return JSON.parse(raw.toString('utf-8') || '{}');
+            }
+            case 'text': {
+                return raw.toString('utf-8');
+            }
+            case 'urlencoded': {
+                const text = raw.toString('utf-8');
+                const search = new URLSearchParams(text);
+                return searchParamsToDict(search);
+            }
+            case 'raw':
+            default:
+                return raw;
+        }
+    }
+
+    private async readRequestBodyRaw(): Promise<Buffer> {
         let bytesRead = 0;
         const chunks: Buffer[] = [];
         for await (const chunk of this.request) {

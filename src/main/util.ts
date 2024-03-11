@@ -5,6 +5,8 @@ import { HttpDict } from './HttpDict.js';
 import { HttpHandler, HttpHandlerFn, HttpNext } from './HttpHandler.js';
 import { HttpRoute } from './HttpRoute.js';
 
+export type RequestBodyType = 'auto' | 'raw' | 'json' | 'text' | 'urlencoded';
+
 export function headersToDict(headers: Record<string, string | string[] | undefined>): HttpDict {
     const dict: HttpDict = Object.create(null);
     for (const [key, value] of Object.entries(headers)) {

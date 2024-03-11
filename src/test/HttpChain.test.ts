@@ -1,22 +1,23 @@
 import assert from 'assert';
 import { dep } from 'mesh-ioc';
 
-import { HttpChain } from '../main/index.js';
+import { HttpChain, HttpDelegate } from '../main/index.js';
 import { BarMiddleware, CatchMiddleware, EndpointHandler, FooMiddleware, ThrowMiddleware } from './handlers.js';
 import { runtime } from './runtime.js';
 
 describe('HttpChain', () => {
 
     it('calls middlware in order', async () => {
-        class Handler extends HttpChain {
+        class Handler extends HttpDelegate {
             @dep() foo!: FooMiddleware;
             @dep() bar!: BarMiddleware;
             @dep() endpoint!: EndpointHandler;
-            handlers = [
+
+            handler = new HttpChain([
                 this.foo,
                 this.bar,
                 this.endpoint,
-            ];
+            ]);
         }
         runtime.setHandler(Handler);
         await runtime.server.start();
@@ -34,15 +35,15 @@ describe('HttpChain', () => {
     });
 
     it('allows catching and throwing with middleware', async () => {
-        class Handler extends HttpChain {
+        class Handler extends HttpDelegate {
             @dep() foo!: FooMiddleware;
             @dep() catch!: CatchMiddleware;
             @dep() throw!: ThrowMiddleware;
-            handlers = [
+            handler = new HttpChain([
                 this.foo,
                 this.catch,
                 this.throw,
-            ];
+            ]);
         }
         runtime.setHandler(Handler);
         await runtime.server.start();
