@@ -82,7 +82,7 @@ export class HttpContext {
         return this.requestBody;
     }
 
-    async convertRequestBody(raw: Buffer, type: RequestBodyType = 'raw') {
+    convertRequestBody(raw: Buffer, type: RequestBodyType = 'raw') {
         switch (type) {
             case 'json': {
                 return JSON.parse(raw.toString('utf-8') || '{}');
