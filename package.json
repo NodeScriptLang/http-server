@@ -48,6 +48,7 @@
         "@nodescript/pathmatcher": "^1.2.0",
         "@nodescript/protocomm": "^1.0.0",
         "mesh-config": "^1.1.0",
+        "mesh-decorators": "^1.0.0",
         "mesh-ioc": "^3.3.0",
         "nanoevent": "^1.0.0"
     }
