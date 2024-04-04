@@ -7,7 +7,7 @@ import { invokeStatusChecks } from '../status-check.js';
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
 
-export class GenericStatusHandler implements HttpHandler {
+export class HttpStatusHandler implements HttpHandler {
 
     @dep() private mesh!: Mesh;
 
