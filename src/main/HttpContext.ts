@@ -25,6 +25,7 @@ export class HttpContext {
     startedAt = Date.now();
     params: Record<string, string> = Object.create(null);
     state: Record<string, any> = Object.create(null);
+    log = true;
 
     protected _requestBodyRead = false;
 
@@ -160,6 +161,7 @@ export class HttpContext {
         const contentLength = buffer.byteLength;
         response.setHeader('Content-Type', contentType);
         response.setHeader('Content-Length', contentLength);
+        response.setHeader('Server-Timing', `total;dur=${Date.now() - this.startedAt}`);
         response.writeHead(this.status);
         response.end(buffer);
     }

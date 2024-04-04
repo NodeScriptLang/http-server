@@ -10,11 +10,15 @@ export class HttpMetricsHandler implements HttpHandler {
 
     async handle(ctx: HttpContext, next: HttpNext) {
         if (ctx.method === 'GET' && ctx.path === '/metrics') {
-            const report = generateMetricsReport(this.mesh);
-            ctx.status = 200;
-            ctx.responseBody = report;
-            return;
+            return this.serveMetrics(ctx);
         }
         return next();
+    }
+
+    private serveMetrics(ctx: HttpContext) {
+        const report = generateMetricsReport(this.mesh);
+        ctx.status = 200;
+        ctx.responseBody = report;
+        ctx.log = false;
     }
 }

@@ -25,6 +25,7 @@ export class HttpStatusHandler implements HttpHandler {
             ...checks,
         };
         ctx.status = 200;
+        ctx.log = false;
     }
 
 }
