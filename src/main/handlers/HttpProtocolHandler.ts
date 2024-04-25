@@ -41,11 +41,15 @@ export abstract class HttpProtocolHandler<P> implements HttpHandler {
             this.logger.debug(`>>> ${domainName}.${methodName}`, decodedParams);
             const domainImpl = (this.protocolImpl as any)[domainName];
             const methodImpl = domainImpl[methodName] as DomainMethod<any, any>;
+            ctx.state.domainName = domainName;
+            ctx.state.methodName = methodName;
+            ctx.state.methodDef = methodDef;
+            ctx.state.params = decodedParams;
             const res = await methodImpl.call(domainImpl, decodedParams);
-            const decoded = resSchema.decode(res);
-            this.logger.debug(`<<< ${domainName}.${methodName}`, decoded);
+            const decodedRes = resSchema.decode(res);
+            this.logger.debug(`<<< ${domainName}.${methodName}`, decodedRes);
             ctx.status = 200;
-            ctx.responseBody = decoded;
+            ctx.responseBody = decodedRes;
             this.methodStats.emit({
                 domain: domainName,
                 method: methodName,
