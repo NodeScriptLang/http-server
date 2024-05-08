@@ -4,9 +4,9 @@ import { Stream } from 'stream';
 
 import { HttpDict } from './HttpDict.js';
 import { HttpServerConfig } from './HttpServer.js';
-import { RequestBodyType, searchParamsToDict } from './util.js';
+import { isTypedArray, RequestBodyType, searchParamsToDict } from './util.js';
 
-export type HttpResponseBody = Stream | Buffer | string | object | undefined;
+export type HttpResponseBody = Stream | Buffer | ArrayBuffer | Uint8Array | string | object | undefined;
 
 const EMPTY_STATUSES = new Set([204, 205, 304]);
 
@@ -166,9 +166,12 @@ export class HttpContext {
         response.end(buffer);
     }
 
-    inferResponseBody(): [string, Buffer] {
+    inferResponseBody(): [string, ArrayBuffer] {
         const body = this.responseBody;
         if (Buffer.isBuffer(body)) {
+            return ['application/x-octet-stream', body];
+        }
+        if (isTypedArray(body)) {
             return ['application/x-octet-stream', body];
         }
         if (typeof body === 'string') {

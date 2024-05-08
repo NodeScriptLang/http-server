@@ -2,6 +2,7 @@ import assert from 'assert';
 
 import { EchoHandler } from './handlers.js';
 import { runtime } from './runtime.js';
+import { HttpContext } from '../main/HttpContext.js';
 
 describe('HttpServer', () => {
 
@@ -37,6 +38,20 @@ describe('HttpServer', () => {
         assert.deepStrictEqual(json.body, {
             hello: 'world',
         });
+    });
+
+    it('supports binary responses', async () => {
+        await runtime.server.start();
+        runtime.setHandler(class {
+            async handle(ctx: HttpContext) {
+                ctx.responseBody = new Uint8Array([0, 1, 2, 3, 4]);
+            }
+        });
+        const res = await fetch(runtime.getUrl('/'));
+        assert.strictEqual(res.status, 200);
+        assert.strictEqual(res.headers.get('content-length'), '5');
+        const buffer = await res.arrayBuffer();
+        assert.deepStrictEqual(new Uint8Array(buffer), new Uint8Array([0, 1, 2, 3, 4]));
     });
 
 });

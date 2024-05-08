@@ -63,3 +63,8 @@ export function createRouteHandler(route: HttpRoute): HttpHandlerFn {
         await routeHandler(ctx, next);
     };
 }
+
+export function isTypedArray(value: any): value is ArrayBuffer {
+    const TypedArray = Object.getPrototypeOf(Uint8Array);
+    return value instanceof ArrayBuffer || value instanceof TypedArray;
+}
