@@ -4,7 +4,7 @@ import { Stream } from 'stream';
 
 import { HttpDict } from './HttpDict.js';
 import { HttpServerConfig } from './HttpServer.js';
-import { isTypedArray, RequestBodyType, searchParamsToDict } from './util.js';
+import { RequestBodyType, searchParamsToDict, TypedArray } from './util.js';
 
 export type HttpResponseBody = Stream | Buffer | ArrayBuffer | Uint8Array | string | object | undefined;
 
@@ -166,13 +166,20 @@ export class HttpContext {
         response.end(buffer);
     }
 
-    inferResponseBody(): [string, ArrayBuffer] {
+    inferResponseBody(): [string, Buffer | Uint8Array] {
         const body = this.responseBody;
         if (Buffer.isBuffer(body)) {
             return ['application/x-octet-stream', body];
         }
-        if (isTypedArray(body)) {
+        if (body instanceof Uint8Array) {
             return ['application/x-octet-stream', body];
+        }
+        if (body instanceof ArrayBuffer) {
+            return ['application/x-octet-stream', new Uint8Array(body)];
+        }
+        if (body instanceof TypedArray) {
+            const arr = body as Uint8Array;
+            return ['application/x-octet-stream', new Uint8Array(arr.buffer)];
         }
         if (typeof body === 'string') {
             return ['text/plain', Buffer.from(body, 'utf-8')];

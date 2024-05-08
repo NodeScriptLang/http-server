@@ -5,6 +5,8 @@ import { HttpDict } from './HttpDict.js';
 import { HttpHandler, HttpHandlerFn, HttpNext } from './HttpHandler.js';
 import { HttpRoute } from './HttpRoute.js';
 
+export const TypedArray = Object.getPrototypeOf(Uint8Array);
+
 export type RequestBodyType = 'auto' | 'raw' | 'json' | 'text' | 'urlencoded';
 
 export function headersToDict(headers: Record<string, string | string[] | undefined>): HttpDict {
@@ -62,9 +64,4 @@ export function createRouteHandler(route: HttpRoute): HttpHandlerFn {
         Object.assign(ctx.params, pathParams);
         await routeHandler(ctx, next);
     };
-}
-
-export function isTypedArray(value: any): value is ArrayBuffer {
-    const TypedArray = Object.getPrototypeOf(Uint8Array);
-    return value instanceof ArrayBuffer || value instanceof TypedArray;
 }
