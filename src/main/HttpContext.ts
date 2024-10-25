@@ -117,14 +117,14 @@ export class HttpContext {
 
     inferRequestBodyType(): RequestBodyType {
         const contentType = this.getRequestHeader('content-type', 'application/x-octet-stream');
-        if (/application\/json/.test(contentType)) {
+        if (/\bapplication\/json\b/i.test(contentType)) {
             return 'json';
         }
-        if (/text\//.test(contentType)) {
-            return 'text';
-        }
-        if (/application\/x-www-form-urlencoded/.test(contentType)) {
+        if (/\bapplication\/x-www-form-urlencoded\b/i.test(contentType)) {
             return 'urlencoded';
+        }
+        if (/\btext\//.test(contentType)) {
+            return 'text';
         }
         return 'raw';
     }

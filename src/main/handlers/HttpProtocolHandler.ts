@@ -82,7 +82,7 @@ export abstract class HttpProtocolHandler<P> implements HttpHandler {
         if (ctx.method === 'GET') {
             return ctx.query;
         }
-        const body = await ctx.readRequestBody('json');
+        const body = await ctx.readRequestBody();
         return body ?? {};
     }
 
