@@ -10,10 +10,12 @@ dotenv.config();
 dotenv.config({ path: '.env.test' });
 
 export class TestHttpServer extends HttpServer {
+
     async handle(ctx: HttpContext, next: HttpNext): Promise<void> {
         const handler = runtime.requestScope.resolve<HttpHandler>('Handler');
         await handler.handle(ctx, next);
     }
+
 }
 
 export class TestRuntime {

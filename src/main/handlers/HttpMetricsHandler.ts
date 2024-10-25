@@ -21,4 +21,5 @@ export class HttpMetricsHandler implements HttpHandler {
         ctx.responseBody = report;
         ctx.log = false;
     }
+
 }

@@ -8,4 +8,5 @@ export abstract class HttpDelegate implements HttpHandler {
     async handle(ctx: HttpContext, next: HttpNext) {
         await this.handler.handle(ctx, next);
     }
+
 }
