@@ -21,7 +21,7 @@ export abstract class HttpServer {
     @config({ default: 8080 }) HTTP_PORT!: number;
     @config({ default: '' }) HTTP_ADDRESS!: string;
     @config({ default: 120_000 }) HTTP_TIMEOUT!: number;
-    @config({ default: 2000 }) HTTP_SHUTDOWN_DELAY!: number;
+    @config({ default: 30_000 }) HTTP_SHUTDOWN_DELAY!: number;
     @config({ default: 5 * 1024 * 1024 }) HTTP_REQUEST_BODY_LIMIT_BYTES!: number;
 
     @dep() logger!: Logger;
@@ -70,6 +70,8 @@ export abstract class HttpServer {
         }
         this.stopping = true;
         // This is required in environments like K8s where traffic is still being sent after SIGTERM
+        const waitSec = Math.round(this.config.shutdownDelay / 1000);
+        this.logger.info(`${this.constructor.name}: stop initiated, waiting for ${waitSec}s before stopping to accept new connections`);
         await new Promise(r => setTimeout(r, this.config.shutdownDelay));
         this.logger.info(`${this.constructor.name}: waiting for existing requests to finish`);
         const closePromise = new Promise<void>((resolve, reject) => server.close(err => err ? reject(err) : resolve()));
