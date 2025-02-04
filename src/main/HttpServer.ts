@@ -1,6 +1,7 @@
 import { NotFoundError } from '@nodescript/errors';
 import { Logger } from '@nodescript/logger';
-import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
+import * as http from 'http';
+import * as https from 'https';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 import { Socket } from 'net';
@@ -24,10 +25,15 @@ export abstract class HttpServer {
     @config({ default: 30_000 }) HTTP_SHUTDOWN_DELAY!: number;
     @config({ default: 5 * 1024 * 1024 }) HTTP_REQUEST_BODY_LIMIT_BYTES!: number;
 
+    @config({ default: '' }) HTTP_TLS_CERT!: string;
+    @config({ default: '' }) HTTP_TLS_KEY!: string;
+    @config({ default: '' }) HTTP_TLS_CA!: string;
+    @config({ default: '' }) HTTP_TLS_CIPHERS!: string;
+
     @dep() logger!: Logger;
 
     protected config: HttpServerConfig;
-    protected server: Server | null = null;
+    protected server: http.Server | https.Server | null = null;
     protected requestsPerSocket = new Map<Socket, number>();
     protected stopping = false;
 
@@ -49,7 +55,7 @@ export abstract class HttpServer {
         }
         this.stopping = false;
         this.requestsPerSocket.clear();
-        const server = createServer((req, res) => this.handleRequest(req, res));
+        const server = this.createServer();
         this.server = server;
         server.on('connection', sock => this.onConnection(sock));
         server.on('request', (req, res) => this.onRequest(req, res));
@@ -86,7 +92,23 @@ export abstract class HttpServer {
         return this.server;
     }
 
-    protected async handleRequest(req: IncomingMessage, res: ServerResponse) {
+    protected createServer() {
+        const cert = this.HTTP_TLS_CERT;
+        const key = this.HTTP_TLS_KEY;
+        const ca = this.HTTP_TLS_CA || undefined;
+        const ciphers = this.HTTP_TLS_CIPHERS || undefined;
+        if (cert && key) {
+            return https.createServer({
+                cert,
+                key,
+                ca,
+                ciphers,
+            }, (req, res) => this.handleRequest(req, res));
+        }
+        return http.createServer((req, res) => this.handleRequest(req, res));
+    }
+
+    protected async handleRequest(req: http.IncomingMessage, res: http.ServerResponse) {
         try {
             const ctx = new HttpContext(this.config, req, res);
             await this.handle(ctx, () => {
@@ -116,7 +138,7 @@ export abstract class HttpServer {
     /**
      * Tracks requests per connection, close connection during shutdown, when requests are served.
      */
-    protected onRequest(req: IncomingMessage, res: ServerResponse) {
+    protected onRequest(req: http.IncomingMessage, res: http.ServerResponse) {
         const socket = req.socket ?? (req as any).client;
         this.requestsPerSocket.set(socket, this.getSocketRequests(socket) + 1);
         res.once('finish', () => {
