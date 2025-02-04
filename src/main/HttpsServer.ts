@@ -15,10 +15,6 @@ export interface HttpServerConfig {
     socketTimeout: number;
     shutdownDelay: number;
     requestBodyLimitBytes: number;
-    tlsCert?: string;
-    tlsKey?: string;
-    tlsCa?: string;
-    tlsCiphers?: string;
 }
 
 export abstract class HttpServer {
@@ -48,10 +44,6 @@ export abstract class HttpServer {
             socketTimeout: this.HTTP_TIMEOUT,
             shutdownDelay: this.HTTP_SHUTDOWN_DELAY,
             requestBodyLimitBytes: this.HTTP_REQUEST_BODY_LIMIT_BYTES,
-            tlsCert: this.HTTP_TLS_CERT || undefined,
-            tlsKey: this.HTTP_TLS_KEY || undefined,
-            tlsCa: this.HTTP_TLS_CA || undefined,
-            tlsCiphers: this.HTTP_TLS_CIPHERS || undefined,
         };
     }
 
@@ -101,14 +93,16 @@ export abstract class HttpServer {
     }
 
     protected createServer() {
-        const cert = this.config.tlsCert;
-        const key = this.config.tlsKey;
+        const cert = this.HTTP_TLS_CERT;
+        const key = this.HTTP_TLS_KEY;
+        const ca = this.HTTP_TLS_CA || undefined;
+        const ciphers = this.HTTP_TLS_CIPHERS || undefined;
         if (cert && key) {
             return https.createServer({
                 cert,
                 key,
-                ca: this.config.tlsCa,
-                ciphers: this.config.tlsCiphers,
+                ca,
+                ciphers,
             }, (req, res) => this.handleRequest(req, res));
         }
         return http.createServer((req, res) => this.handleRequest(req, res));
