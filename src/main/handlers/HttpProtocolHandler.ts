@@ -24,7 +24,10 @@ export abstract class HttpProtocolHandler<P> implements HttpHandler {
     methodStats = new Event<DomainMethodStat>();
 
     async handle(ctx: HttpContext, next: HttpNext) {
-        const [domainName, methodName] = this.parsePath(ctx.url.pathname);
+        if (!ctx.path.startsWith(this.prefix)) {
+            return await next();
+        }
+        const [domainName, methodName] = this.parsePath(ctx.path);
         const {
             methodDef,
             reqSchema,
