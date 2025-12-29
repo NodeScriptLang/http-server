@@ -32,24 +32,24 @@
     "author": "Boris Okunskiy",
     "license": "ISC",
     "devDependencies": {
-        "@nodescript/eslint-config": "^2.0.1",
-        "@types/mocha": "^8.2.3",
+        "@fastify/pre-commit": "^2.2.1",
+        "@nodescript/eslint-config": "^2.1.0",
+        "@types/mocha": "^10.0.10",
         "@types/node": "^18.19.22",
         "dotenv": "^16.4.5",
-        "eslint": "^9.13.0",
-        "mocha": "^9.2.2",
-        "pre-commit": "^1.2.2",
-        "typescript": "^5.5.3"
+        "eslint": "^9.39.2",
+        "mocha": "^11.7.5",
+        "typescript": "^5.9.3"
     },
     "dependencies": {
         "@nodescript/errors": "^1.2.0",
         "@nodescript/logger": "^2.0.6",
-        "@nodescript/metrics": "^1.7.1",
+        "@nodescript/metrics": "^1.7.2",
         "@nodescript/pathmatcher": "^1.3.0",
         "@nodescript/protocomm": "^1.1.0",
-        "mesh-config": "^1.2.1",
-        "mesh-decorators": "^1.1.2",
-        "mesh-ioc": "^4.1.0",
+        "mesh-config": "^1.3.0",
+        "mesh-decorators": "^1.3.2",
+        "mesh-ioc": "^4.1.1",
         "nanoevent": "^1.0.0"
     }
 }
